@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include "GUIslice.h"
 #include "ADBMS1818.hpp"
-ADBMS1818 adbms(5);
+int8_t pins = {14,12,13,15};//tab for custom SPI Pins. sck, miso, mosi, cs is a pin order. In this tab i use HSPI port SPI pins
+ADBMS1818 adbms(pins);
 uint16_t cells_voltage[18];
 void setup() {
   // put your setup code here, to run once:

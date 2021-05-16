@@ -52,7 +52,7 @@ std::map<std::string, uint16_t> ADBMS1818::commands = {
 
 std::map<std::string, uint8_t> ADBMS1818::commands_bits = {
     {"MD", 2}, //7kHz
-    {"DCP", 0}, //discharge not permitted
+    {"DCP", 1}, //discharge permitted
     {"CH", 0},  //all cells conversion
     {"CHG", 0}, //all gpios conversion
     {"CHST", 0}, //
@@ -90,6 +90,16 @@ void ADBMS1818::init(){
     uint16_t wbuff_size = (this->byte_reg)*this->n;
     this->read_buff = new uint8_t [rbuff_size];
     this->write_buff = new uint8_t [wbuff_size];
+    this->vuv = 0;
+    this->vov = 0;
+    this->dcc = 0;
+    this->dcto = 0;
+    this->gpiox = 0x01ff;
+    this->adcopt = false;
+    this->refon = false;
+    this->dtmen = true;
+    this->mute = false;
+    this->fdrf = false;
 }
 
 void ADBMS1818::init_pec_15_table(){
@@ -184,6 +194,19 @@ void ADBMS1818::set_config_reg_a(){
     for(int i=0;i<this->byte_reg*this->n;i++){
         this->write_buff[i] = 0x00;
     }
+    for(int i=0;i<this->byte_reg*this->n;i+=this->byte_reg){
+        this->write_buff[i] = (uint8_t)(this->gpiox << 3);
+        this->write_buff[i] = this->config_bit(this->write_buff[i], 0, this->adcopt);
+        this->write_buff[i] = this->config_bit(this->write_buff[i], 2, this->refon);
+        this->write_buff[(i+1)] = (uint8_t) (0x00ff & this->vuv);
+        this->write_buff[(i+2)] = (uint8_t) (this->vuv >> 8);
+        this->write_buff[(i+2)] |= (uint8_t) ( (this->vov & 0x000f) << 4);
+        this->write_buff[(i+3)] = (uint8_t) (this->vov >> 4);
+        this->write_buff[(i+4)] = (uint8_t)(this->dcc & 0x00ff);
+        this->write_buff[(i+5)] = (uint8_t)(this->dcc >> 8);
+        this->write_buff[(i+5)] |= (uint8_t)(this->dcto << 4);
+    }
+    
     uint8_t command[2];
     command[0] = (uint8_t) this->commands["WRCFGA"] & 0x00FF;
     command[1] = (uint8_t) this->commands["WRCFGA"] >> 8 ;
@@ -193,6 +216,9 @@ void ADBMS1818::set_config_reg_a(){
 void ADBMS1818::set_config_reg_b(){
     for(int i=0;i<this->byte_reg*this->n;i++){
         this->write_buff[i] = 0x00;
+    }
+    for(int i=0;i<this->byte_reg*this->n;i+=this->byte_reg){
+        
     }
     uint8_t command[2];
     command[0] = (uint8_t) this->commands["WRCFGB"] & 0x00FF;
@@ -243,15 +269,23 @@ void ADBMS1818::start_cv_adc_conversion(){
     command = this->config_dcp_bit(command);
     command = this->config_ch_bits(command, "CH");
     uint8_t command2[2];
-    command2[0] = (uint8_t)command & 0x00FF;
-    command2[1] = (uint8_t) command >> 8 ;
+    this->u16_to_u8(this->commands["Mute"], command2);
+    this->poll_command(command2);
+    this->u16_to_u8(command, command2);
+    this->poll_command(command2);
+    this->u16_to_u8(this->commands["Unmute"], command2);
     this->poll_command(command2);
 }
 
 
-uint16_t* ADBMS1818::read_cv_adc(uint16_t cells_voltage[18]){
+
+uint16_t** ADBMS1818::read_cv_adc(){
     this->start_cv_adc_conversion();
-    delay(5);
+    delay(2);
+    uint16_t **cells_voltage = new uint16_t *[this->n];
+    for(int i=0;i<this->n;i++){
+        cells_voltage[i] = new uint16_t [18];
+    }
     uint16_t command;
     uint8_t command2[2];
     std::vector<std::string> comm_keys {"RDCVA", "RDCVB", "RDCVC", "RDCVD", "RDCVE", "RDCVF"};
@@ -261,10 +295,13 @@ uint16_t* ADBMS1818::read_cv_adc(uint16_t cells_voltage[18]){
         command2[0] = (uint8_t)command & 0x00FF;
         command2[1] = (uint8_t) command >> 8 ;
         this->read_command(command2, this->read_buff);
-        for(int i=0;i<6;i+=2){
-            cells_voltage[(j+i)] = this->read_buff[(i+1)];
-            cells_voltage[(j+i)] <<= 8;
-            cells_voltage[(j+i)] |= this->read_buff[i];
+        for(int i=0;i<this->n;i++){
+            for(int k=0;k<6;k+=2){
+                    cells_voltage[i][(k+j)] = this->read_buff[(k+1)];
+                    cells_voltage[i][(k+j)] <<= 8;
+                    cells_voltage[i][(k+j)] |= this->read_buff[k];
+                }
+            
         }
         j += 3;
     }

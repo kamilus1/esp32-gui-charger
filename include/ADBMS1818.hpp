@@ -24,6 +24,7 @@ class ADBMS1818{
         uint16_t pec;
         //configuration bits for write commands
         bool adcopt, refon, dtmen, mute, fdrf;
+        unsigned long pladc_timeout;
         uint8_t dcto;
         uint16_t vuv, vov, gpiox;
         uint32_t dcc;
@@ -45,17 +46,29 @@ class ADBMS1818{
         ADBMS1818(uint16_t port,  uint8_t csPin, uint32_t freq= 500000, uint8_t n = 1, uint8_t br = 6);
         ADBMS1818(int8_t spi_pins[4], uint32_t freq= 500000, uint8_t n = 1, uint8_t br = 6);
         ADBMS1818(uint8_t csPin, uint32_t freq= 500000, uint8_t n = 1, uint8_t br = 6);
+        //couple setters
+        void set_device_count(uint8_t n);
         void begin();
-        void wake_up(uint8_t dur=200);
+        void wake_up(uint8_t dur=20);
         void set_config_reg_a();
         void set_config_reg_b();
         void set_bits(std::string bit_key, uint8_t bit_value);
         void start_cv_adc_conversion(); //for default mode with 7khz  freq it takes about 2.3 ms for all cells conversion. 
         void start_open_wire_conversion();
         void start_self_test_conversion();
-        void start_aux_adc_conversion(); //same like above
+        void start_overlap_conversion(); 
+        void start_gpio_adc_conversion();
+        void start_gpio_adc_conversion_dr();//gpio conversion with digital redundancy. dr == digital redundancy
+        void start_gpio_open_wire_conversion();
+        void start_self_test_gpio_conversion();
+        void start_status_adc_conversion();
+        void start_status_adc_dr_conversion();
+        void start_self_test_status_conversion();
+        void start_cv_gpio12_conversion();
+        void start_cv_sc_conversion();
+        bool pladc_rdy();
         uint16_t ** read_cv_adc();
-        void read_aux_adc(uint16_t aux[9]);
+        uint16_t ** read_aux_adc();
         float convert_voltage(uint16_t voltage);
 
 };

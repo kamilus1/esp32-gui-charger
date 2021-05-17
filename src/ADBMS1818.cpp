@@ -100,6 +100,7 @@ void ADBMS1818::init(){
     this->dtmen = true;
     this->mute = false;
     this->fdrf = false;
+    this->pladc_timeout = 1000;
 }
 
 void ADBMS1818::init_pec_15_table(){
@@ -131,6 +132,15 @@ void ADBMS1818::pec_15(uint8_t *tab, uint8_t len){
     }
 }
 
+void ADBMS1818::set_device_count(uint8_t n){
+    this->n = n;
+    delete[] this->write_buff;
+    delete[] this->read_buff;
+    uint16_t rbuff_size = (this->byte_reg+2)*this->n;
+    uint16_t wbuff_size = (this->byte_reg)*this->n;
+    this->read_buff = new uint8_t [rbuff_size];
+    this->write_buff = new uint8_t [wbuff_size];
+}
 
 void ADBMS1818::poll_command(uint8_t command[2]){
     this->pec_15(command, 2);
@@ -161,20 +171,21 @@ bool ADBMS1818::read_command(uint8_t command[2], uint8_t *data){
     spi.transfer(command, 2);
     spi.transfer16(this->pec);
     uint16_t test_pec;
+    bool test = true;
     for(unsigned i= 0; i<this->n;i++){
-        for(unsigned j=i*(this->byte_reg+1); j< this->byte_reg*(i+1)+2;j++){
+        for(unsigned j=i*(this->byte_reg+2); j< (i+1)*(this->byte_reg+2);j++){
             data[j] = spi.transfer(0x00);
         }
-        this->pec_15(data+this->byte_reg*i+2, this->byte_reg);
-        test_pec = data[i*(this->byte_reg+1)+1];
+        this->pec_15(data+(this->byte_reg+2)*i, this->byte_reg);
+        test_pec = data[i*(this->byte_reg+2)+6];
         test_pec <<= 8 ;
-        test_pec |= data[i*(this->byte_reg+1)];
+        test_pec |= data[i*(this->byte_reg+2)+7];
         if(test_pec != this->pec){
-            return false;
+            test =  false;
         }
     }
 
-    return true;
+    return test;
 }
 
 
@@ -262,7 +273,19 @@ uint16_t ADBMS1818::config_ch_bits(uint16_t command, std::string key){
     }
     return command;
 }
-
+uint16_t ADBMS1818::config_st_bits(uint16_t command){
+    uint8_t bits = this->commands_bits["ST"];
+    for(int i=0;i<2;i++){
+        bool b = bits & 0x0001;
+        bits >>= 1;
+        command = this->config_bit(command, (uint8_t)(5+i), b);
+    }
+    return command;
+}
+uint16_t ADBMS1818::config_pup_bit(uint16_t command){
+    command = this->config_bit(command, 6, (this->commands_bits["PUP"]&0x0001));
+    return command;
+}
 void ADBMS1818::start_cv_adc_conversion(){
     uint16_t command = this->commands["ADCV"];
     command = this->config_md_bits(command);
@@ -276,12 +299,159 @@ void ADBMS1818::start_cv_adc_conversion(){
     this->u16_to_u8(this->commands["Unmute"], command2);
     this->poll_command(command2);
 }
+void ADBMS1818::start_open_wire_conversion(){
+    uint16_t command = this->commands["ADOW"];
+    command = this->config_md_bits(command);
+    command = this->config_dcp_bit(command);
+    command = this->config_ch_bits(command, "CH");
+    command = this->config_pup_bit(command);
+    uint8_t command2[2];
+    this->u16_to_u8(this->commands["Mute"], command2);
+    this->poll_command(command2);
+    this->u16_to_u8(command, command2);
+    this->poll_command(command2);
+    this->u16_to_u8(this->commands["Unmute"], command2);
+    this->poll_command(command2);
+}
 
+void ADBMS1818::start_self_test_conversion(){
+    uint16_t command = this->commands["CVST"];
+    command = this->config_md_bits(command);
+    command = this->config_st_bits(command);
+    uint8_t command2[2];
+    this->u16_to_u8(this->commands["Mute"], command2);
+    this->poll_command(command2);
+    this->u16_to_u8(command, command2);
+    this->poll_command(command2);
+    this->u16_to_u8(this->commands["Unmute"], command2);
+    this->poll_command(command2);
+}
 
+void ADBMS1818::start_overlap_conversion(){
+    uint16_t command = this->commands["ADOL"];
+    command = this->config_md_bits(command);
+    command = this->config_dcp_bit(command);
+    uint8_t command2[2];
+    this->u16_to_u8(this->commands["Mute"], command2);
+    this->poll_command(command2);
+    this->u16_to_u8(command, command2);
+    this->poll_command(command2);
+    this->u16_to_u8(this->commands["Unmute"], command2);
+    this->poll_command(command2);
+}
+
+void ADBMS1818::start_gpio_adc_conversion(){
+    uint16_t command = this->commands["ADAX"];
+    command = this->config_md_bits(command);
+    command = this->config_ch_bits(command, "CHG");
+    uint8_t command2[2];
+    this->u16_to_u8(this->commands["Mute"], command2);
+    this->poll_command(command2);
+    this->u16_to_u8(command, command2);
+    this->poll_command(command2);
+    this->u16_to_u8(this->commands["Unmute"], command2);
+    this->poll_command(command2);
+}
+void ADBMS1818::start_gpio_adc_conversion_dr(){
+    uint16_t command = this->commands["ADAXD"];
+    command = this->config_md_bits(command);
+    command = this->config_ch_bits(command, "CHG");
+    uint8_t command2[2];
+    this->u16_to_u8(this->commands["Mute"], command2);
+    this->poll_command(command2);
+    this->u16_to_u8(command, command2);
+    this->poll_command(command2);
+    this->u16_to_u8(this->commands["Unmute"], command2);
+    this->poll_command(command2);
+}
+void ADBMS1818::start_gpio_open_wire_conversion(){
+    uint16_t command = this->commands["AXOW"];
+    command = this->config_md_bits(command);
+    command = this->config_ch_bits(command, "CHG");
+    command = this->config_pup_bit(command);
+    uint8_t command2[2];
+    this->u16_to_u8(this->commands["Mute"], command2);
+    this->poll_command(command2);
+    this->u16_to_u8(command, command2);
+    this->poll_command(command2);
+    this->u16_to_u8(this->commands["Unmute"], command2);
+    this->poll_command(command2);
+}
+void ADBMS1818::start_self_test_gpio_conversion(){
+    uint16_t command = this->commands["AXST"];
+    command = this->config_md_bits(command);
+    command = this->config_st_bits(command);
+    uint8_t command2[2];
+    this->u16_to_u8(this->commands["Mute"], command2);
+    this->poll_command(command2);
+    this->u16_to_u8(command, command2);
+    this->poll_command(command2);
+    this->u16_to_u8(this->commands["Unmute"], command2);
+    this->poll_command(command2);
+}
+void ADBMS1818::start_status_adc_conversion(){
+    uint16_t command = this->commands["ADSTAT"];
+    command = this->config_md_bits(command);
+    command = this->config_ch_bits(command, "CHST");
+    uint8_t command2[2];
+    this->u16_to_u8(this->commands["Mute"], command2);
+    this->poll_command(command2);
+    this->u16_to_u8(command, command2);
+    this->poll_command(command2);
+    this->u16_to_u8(this->commands["Unmute"], command2);
+    this->poll_command(command2);
+}
+void ADBMS1818::start_status_adc_dr_conversion(){
+    uint16_t command = this->commands["ADSTATD"];
+    command = this->config_md_bits(command);
+    command = this->config_ch_bits(command, "CHST");
+    uint8_t command2[2];
+    this->u16_to_u8(this->commands["Mute"], command2);
+    this->poll_command(command2);
+    this->u16_to_u8(command, command2);
+    this->poll_command(command2);
+    this->u16_to_u8(this->commands["Unmute"], command2);
+    this->poll_command(command2);
+}
+
+void ADBMS1818::start_self_test_status_conversion(){
+    uint16_t command = this->commands["STATST"];
+    command = this->config_md_bits(command);
+    command = this->config_st_bits(command);
+    uint8_t command2[2];
+    this->u16_to_u8(this->commands["Mute"], command2);
+    this->poll_command(command2);
+    this->u16_to_u8(command, command2);
+    this->poll_command(command2);
+    this->u16_to_u8(this->commands["Unmute"], command2);
+    this->poll_command(command2);
+}
+void ADBMS1818::start_cv_gpio12_conversion(){
+    uint16_t command = this->commands["ADCVAX"];
+    command = this->config_md_bits(command);
+    command = this->config_dcp_bit(command);
+    uint8_t command2[2];
+    this->u16_to_u8(this->commands["Mute"], command2);
+    this->poll_command(command2);
+    this->u16_to_u8(command, command2);
+    this->poll_command(command2);
+    this->u16_to_u8(this->commands["Unmute"], command2);
+    this->poll_command(command2);
+}
+void ADBMS1818::start_cv_sc_conversion(){
+    uint16_t command = this->commands["ADCVSC"];
+    command = this->config_md_bits(command);
+    command = this->config_dcp_bit(command);
+    uint8_t command2[2];
+    this->u16_to_u8(this->commands["Mute"], command2);
+    this->poll_command(command2);
+    this->u16_to_u8(command, command2);
+    this->poll_command(command2);
+    this->u16_to_u8(this->commands["Unmute"], command2);
+    this->poll_command(command2);
+}
 
 uint16_t** ADBMS1818::read_cv_adc(){
-    this->start_cv_adc_conversion();
-    delay(2);
     uint16_t **cells_voltage = new uint16_t *[this->n];
     for(int i=0;i<this->n;i++){
         cells_voltage[i] = new uint16_t [18];
@@ -292,14 +462,13 @@ uint16_t** ADBMS1818::read_cv_adc(){
     int j = 0;
     for(std::string key: comm_keys){
         command = this->commands[key];
-        command2[0] = (uint8_t)command & 0x00FF;
-        command2[1] = (uint8_t) command >> 8 ;
+        this->u16_to_u8(command, command2);
         this->read_command(command2, this->read_buff);
         for(int i=0;i<this->n;i++){
             for(int k=0;k<6;k+=2){
-                    cells_voltage[i][(k+j)] = this->read_buff[(k+1)];
-                    cells_voltage[i][(k+j)] <<= 8;
-                    cells_voltage[i][(k+j)] |= this->read_buff[k];
+                    cells_voltage[i][(k/2+j)] = this->read_buff[(i*8+ k+1)];
+                    cells_voltage[i][(k/2+j)] <<= 8;
+                    cells_voltage[i][(k/2+j)] |= this->read_buff[i*8+k];
                 }
             
         }
@@ -307,4 +476,69 @@ uint16_t** ADBMS1818::read_cv_adc(){
     }
     
     return cells_voltage;
+}
+uint16_t ** ADBMS1818::read_aux_adc(){
+    uint16_t **aux_voltage = new uint16_t *[this->n];
+    for(int i=0;i<this->n;i++){
+        aux_voltage[i] = new uint16_t [9];
+    }
+    std::vector<std::string> comm_keys = {"RDAUXA", "RDAUXC"};
+    std::string last_command = "RDAUXD", second_command = "RDAUXB";
+    uint16_t command;
+    uint8_t command2[2];
+    int j = 0;
+    for(std::string key: comm_keys){
+        command = this->commands[key];
+        this->u16_to_u8(command, command2);
+        this->read_command(command2, this->read_buff);
+        for(int i=0;i<this->n;i++){
+            for(int k=0;k<6;k+=2){
+                aux_voltage[i][(k/2+j)] = this->read_buff[i*8+ k+1];
+                aux_voltage[i][(k/2+j)] <<= 8;
+                aux_voltage[i][(k/2+j)] |= this->read_buff[i*8+ k];
+            }
+        }
+        j += 3;
+    }
+    command = this->commands[second_command];
+    this->u16_to_u8(command, command2);
+    this->read_command(command2, this->read_buff);
+    for(int i=0;i<this->n;i++){
+        for(int k=0;k<4;k+=2){
+            aux_voltage[i][(k/2+j)] = this->read_buff[i*8+ k+1];
+            aux_voltage[i][(k/2+j)] <<= 8;
+            aux_voltage[i][(k/2+j)] |= this->read_buff[i*8+ k];
+        }
+    }
+    j+= 2;
+    command = this->commands[last_command];
+    this->u16_to_u8(command, command2);
+    this->read_command(command2, this->read_buff);
+    for(int i=0;i<this->n;i++){
+        aux_voltage[i][j] = this->read_buff[i*8+1];
+        aux_voltage[i][j] <<= 8;
+        aux_voltage[i][j] |= this->read_buff[i*8];
+    }
+    return aux_voltage;
+}
+
+float ADBMS1818::convert_voltage(uint16_t voltage){
+    return 0.000001 * (float)voltage;
+}
+
+bool ADBMS1818::pladc_rdy(){
+    uint16_t command = this->commands["PLADC"];
+    uint8_t command2[2];
+    this->u16_to_u8(command, command2);
+    this->pec_15(command2, 2);
+    digitalWrite(this->cs, LOW);
+    spi.transfer(command2, 2);
+    spi.transfer16(this->pec);
+    uint8_t result=0;
+    unsigned long time = micros();
+    while((micros()-time)<=this->pladc_timeout&&(result==0)){
+        result = spi.transfer(0x00);
+    }
+    digitalWrite(this->cs, HIGH);
+    return result != 0;
 }

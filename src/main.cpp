@@ -4,12 +4,13 @@
 #include "ADBMS1818.hpp"
 #define BAUD_RATE 115200
 #define N 1
+#define CS 15
 int8_t pins[4] = {14,12,13,15};//tab for custom SPI Pins. sck, miso, mosi, cs is a pin order. In this tab i use HSPI port SPI pins
 //ADBMS1818 adbms(pins); //constructor with modified pins
-ADBMS1818 adbms((uint8_t)VSPI, (uint8_t)5); //construcot with modified CS pin and spi port
+ADBMS1818 adbms((uint8_t)VSPI, (uint8_t)CS); //construcot with modified CS pin and spi port
 //ADBMS1818 adbms(15); //constructor with default SPI and CS pin modifed
 void setup() {
-  pinMode(cs, OUTPUT);
+  pinMode(CS, OUTPUT);
   // put your setup code here, to run once:
   adbms.set_device_count(N);
   Serial.begin(BAUD_RATE);

@@ -61,29 +61,28 @@ std::map<std::string, uint8_t> ADBMS1818::commands_bits = {
 };
 
 void ADBMS1818::u16_to_u8(uint16_t x, uint8_t *y){
-    y[0] = x >> 8;
-    y[1] = x & 0x00FF;
+    y[0] = (uint8_t)(x >> 8);
+    y[1] = (uint8_t)(x & 0x00FF);
 }
 
 
 ADBMS1818::ADBMS1818(uint8_t port, uint8_t cspin, uint32_t freq, uint8_t n, uint8_t br): f(freq), cs(cspin), n(n), byte_reg(br){
-    spi = new SPIClass();
+    spi = new SPIClass(port);
     spi->begin();
     this->init();
 }
 ADBMS1818::ADBMS1818(int8_t spi_pins[4],uint32_t freq, uint8_t n, uint8_t br): f(freq), cs(spi_pins[3]), n(n), byte_reg(br){
     spi = new SPIClass();
-    spi->begin(spi_pins[0], spi_pins[1], spi_pins[2], cs);
+    spi->begin(spi_pins[0], spi_pins[1], spi_pins[2], -1);
     this->init();
 }
 ADBMS1818::ADBMS1818(uint8_t cspin, uint32_t freq, uint8_t n, uint8_t br): f(freq), cs(cspin), n(n), byte_reg(br){
     spi = new SPIClass();
-    spi->begin(cs);
+    spi->begin();
     
     this->init();
 }
 void ADBMS1818::init(){
-    this->init_pec_15_table();
     uint16_t rbuff_size = (this->byte_reg+2)*this->n;
     uint16_t wbuff_size = (this->byte_reg)*this->n;
     this->read_buff = new uint8_t [rbuff_size];
@@ -98,37 +97,20 @@ void ADBMS1818::init(){
     this->dtmen = true;
     this->mute = false;
     this->fdrf = false;
-    this->pladc_timeout = 1000;
+    this->pladc_timeout = 1500;
     spi_settings = new SPISettings(this->f, MSBFIRST, SPI_MODE0);
 }
 
-void ADBMS1818::init_pec_15_table(){
-    uint16_t crc_15_poly = 0x4599;
-    uint16_t remainder;
-    for(unsigned i=0;i<256;i++){
-        remainder = i << 7;
-        for(unsigned bit=8; bit>0; --bit){
-            if (remainder & 0x4000)
-            {
-                remainder = ((remainder << 1));
-                remainder = (remainder ^ crc_15_poly);
-            }
-            else
-            {
-                remainder = ((remainder << 1));
-            }
-            }
-        this->pec15Table[i] = remainder&0xFFFF;
-    }
-}
 
 void ADBMS1818::pec_15(uint8_t *tab, uint8_t len){
-    this->pec = 0x0010;
+    uint16_t pec_bytes = 0x0010;
     uint16_t address;
     for(unsigned i=0;i<len;i++){
-        address = ((this->pec>>7)^tab[i])&0xff;
-        this->pec = (this->pec << 8)^this->pec15Table[address];
+        address = ((pec_bytes>>7)^tab[i])&0xff;
+        pec_bytes = (pec_bytes << 8)^crc15Table[address];
     }
+    pec_bytes *= 2;
+    this->u16_to_u8(pec_bytes, this->pec);
 }
 
 void ADBMS1818::set_device_count(uint8_t n){
@@ -144,10 +126,10 @@ void ADBMS1818::set_device_count(uint8_t n){
 void ADBMS1818::poll_command(uint8_t command[2]){
     this->wake_up();
     this->pec_15(command, 2);
-    digitalWrite(this->cs, LOW);
     spi->beginTransaction(*spi_settings);
+    digitalWrite(this->cs, LOW);
     spi->transfer(command, 2);
-    spi->transfer16(this->pec);
+    spi->transfer(this->pec, 2);
     digitalWrite(this->cs, HIGH);
     spi->endTransaction();
 }
@@ -155,17 +137,18 @@ void ADBMS1818::poll_command(uint8_t command[2]){
 void ADBMS1818::write_command(uint8_t command[2], uint8_t *data){
     this->wake_up();
     this->pec_15(command, 2);
-    digitalWrite(this->cs, LOW);
     spi->beginTransaction(*spi_settings);
+    digitalWrite(this->cs, LOW);
     spi->transfer(command, 2);
-    spi->transfer16(this->pec);
+    spi->transfer(this->pec, 2);
     for(unsigned i = this->n; i>0; i--){
         for(unsigned j=0;j<this->byte_reg;j++){
             spi->transfer(data[j]);
         }
         this->pec_15(data+(this->n - i)*this->byte_reg, this->byte_reg);
-        spi->transfer16(this->pec);
+        spi->transfer(this->pec, 2);
     }
+    
     digitalWrite(this->cs, HIGH);
     spi->endTransaction();
 }
@@ -173,24 +156,28 @@ void ADBMS1818::write_command(uint8_t command[2], uint8_t *data){
 bool ADBMS1818::read_command(uint8_t command[2], uint8_t *data){
     this->wake_up();
     this->pec_15(command, 2);
-    digitalWrite(this->cs, LOW);
     spi->beginTransaction(*spi_settings);
+    digitalWrite(this->cs, LOW);
     spi->transfer(command, 2);
-    spi->transfer16(this->pec);
-    uint16_t test_pec;
+    spi->transfer(this->pec, 2);
+    uint16_t test_pec, calc_pec;
     bool test = true;
     for(unsigned i= 0; i<this->n;i++){
         for(unsigned j=i*(this->byte_reg+2); j< (i+1)*(this->byte_reg+2);j++){
-            data[j] = spi->transfer(0x00);
+            data[j] = spi->transfer(0xFF);
         }
         this->pec_15(data+(this->byte_reg+2)*i, this->byte_reg);
         test_pec = data[i*(this->byte_reg+2)+6];
         test_pec <<= 8 ;
         test_pec |= data[i*(this->byte_reg+2)+7];
-        if(test_pec != this->pec){
+        calc_pec = this->pec[0];
+        calc_pec <<= 8;
+        calc_pec |= this->pec[1];
+        if(test_pec != calc_pec){
             test =  false;
         }
     }
+    digitalWrite(this->cs, HIGH);
     spi->endTransaction();
     return test;
 }
@@ -539,14 +526,15 @@ bool ADBMS1818::pladc_rdy(){
     uint8_t command2[2];
     this->u16_to_u8(command, command2);
     this->pec_15(command2, 2);
-    digitalWrite(this->cs, LOW);
     spi->beginTransaction(*spi_settings);
+    digitalWrite(this->cs, LOW);
+    
     spi->transfer(command2, 2);
-    spi->transfer16(this->pec);
+    spi->transfer(this->pec, 2);
     uint8_t result=0;
     unsigned long time = micros();
-    while((micros()-time)<=this->+&&(result==0)){
-        result = spi->transfer(0x00);
+    while((micros()-time)<=this->pladc_timeout&&(result==0)){
+        result = spi->transfer(0xFF);
     }
     digitalWrite(this->cs, HIGH);
     spi->endTransaction();

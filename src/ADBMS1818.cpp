@@ -151,6 +151,7 @@ void ADBMS1818::poll_command(uint8_t command[2]){
     spi->transfer(command, 2);
     spi->transfer16(this->pec);
     digitalWrite(this->cs, HIGH);
+    spi->endTransaction();
 }
 
 void ADBMS1818::write_command(uint8_t command[2], uint8_t *data){
@@ -168,6 +169,7 @@ void ADBMS1818::write_command(uint8_t command[2], uint8_t *data){
         spi->transfer16(this->pec);
     }
     digitalWrite(this->cs, HIGH);
+    spi->endTransaction();
 }
 
 bool ADBMS1818::read_command(uint8_t command[2], uint8_t *data){
@@ -191,7 +193,7 @@ bool ADBMS1818::read_command(uint8_t command[2], uint8_t *data){
             test =  false;
         }
     }
-
+    spi->endTransaction();
     return test;
 }
 
@@ -548,5 +550,6 @@ bool ADBMS1818::pladc_rdy(){
         result = spi->transfer(0x00);
     }
     digitalWrite(this->cs, HIGH);
+    spi->endTransaction();
     return result != 0;
 }

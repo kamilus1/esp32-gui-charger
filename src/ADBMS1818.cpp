@@ -83,8 +83,6 @@ ADBMS1818::ADBMS1818(uint8_t cspin, uint32_t freq, uint8_t n, uint8_t br): f(fre
     this->init();
 }
 void ADBMS1818::init(){
-    pinMode(cs, OUTPUT);
-    digitalWrite(cs, HIGH);
     this->init_pec_15_table();
     uint16_t rbuff_size = (this->byte_reg+2)*this->n;
     uint16_t wbuff_size = (this->byte_reg)*this->n;
@@ -249,6 +247,7 @@ void ADBMS1818::set_config_reg_b(){
 
 
 void ADBMS1818::begin(){
+    digitalWrite(cs, HIGH);
     this->set_config_reg_a();
     this->set_config_reg_b();
 }
@@ -546,7 +545,7 @@ bool ADBMS1818::pladc_rdy(){
     spi->transfer16(this->pec);
     uint8_t result=0;
     unsigned long time = micros();
-    while((micros()-time)<=this->pladc_timeout&&(result==0)){
+    while((micros()-time)<=this->+&&(result==0)){
         result = spi->transfer(0x00);
     }
     digitalWrite(this->cs, HIGH);

@@ -44,13 +44,14 @@ class ADBMS1818{
         
     public:
         
-        ADBMS1818(uint8_t port,  uint8_t csPin, uint32_t freq= 100000, uint8_t n = 1, uint8_t br = 6);
-        ADBMS1818(int8_t spi_pins[4], uint32_t freq= 100000, uint8_t n = 1, uint8_t br = 6);
+        ADBMS1818(uint8_t port,  uint8_t csPin, uint32_t freq= 1000000, uint8_t n = 1, uint8_t br = 6);
+        ADBMS1818(int8_t spi_pins[4], uint32_t freq= 1000000, uint8_t n = 1, uint8_t br = 6);
         ADBMS1818(uint8_t csPin, uint32_t freq= 1000000, uint8_t n = 1, uint8_t br = 6);
         //couple setters
         void set_device_count(uint8_t n);
         void begin();
         void wake_up(uint32_t dur=300);
+        void wake_up_idle();
         void set_config_reg_a();
         void set_config_reg_b();
         void set_bits(std::string bit_key, uint8_t bit_value);

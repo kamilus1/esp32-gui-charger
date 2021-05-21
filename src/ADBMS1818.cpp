@@ -66,23 +66,23 @@ void ADBMS1818::u16_to_u8(uint16_t x, uint8_t *y){
 }
 
 
-ADBMS1818::ADBMS1818(uint16_t port, uint8_t cspin, uint32_t freq, uint8_t n, uint8_t br): f(freq), cs(cspin), n(n), byte_reg(br){
-    spi.begin(port);
-    spi.setFrequency(freq);
+ADBMS1818::ADBMS1818(uint8_t port, uint8_t cspin, uint32_t freq, uint8_t n, uint8_t br): f(freq), cs(cspin), n(n), byte_reg(br){
+    spi = new SPIClass();
+    spi->begin();
     this->init();
 }
 ADBMS1818::ADBMS1818(int8_t spi_pins[4],uint32_t freq, uint8_t n, uint8_t br): f(freq), cs(spi_pins[3]), n(n), byte_reg(br){
-    spi.begin(spi_pins[0], spi_pins[1], spi_pins[2], cs);
-    spi.setFrequency(freq);
+    spi = new SPIClass();
+    spi->begin(spi_pins[0], spi_pins[1], spi_pins[2], cs);
     this->init();
 }
 ADBMS1818::ADBMS1818(uint8_t cspin, uint32_t freq, uint8_t n, uint8_t br): f(freq), cs(cspin), n(n), byte_reg(br){
-    spi.begin();
+    spi = new SPIClass();
+    spi->begin(cs);
     
     this->init();
 }
 void ADBMS1818::init(){
-    spi.setFrequency(f);
     pinMode(cs, OUTPUT);
     digitalWrite(cs, HIGH);
     this->init_pec_15_table();
@@ -101,6 +101,7 @@ void ADBMS1818::init(){
     this->mute = false;
     this->fdrf = false;
     this->pladc_timeout = 1000;
+    spi_settings = new SPISettings(this->f, MSBFIRST, SPI_MODE0);
 }
 
 void ADBMS1818::init_pec_15_table(){
@@ -143,38 +144,44 @@ void ADBMS1818::set_device_count(uint8_t n){
 }
 
 void ADBMS1818::poll_command(uint8_t command[2]){
+    this->wake_up();
     this->pec_15(command, 2);
     digitalWrite(this->cs, LOW);
-    spi.transfer(command, 2);
-    spi.transfer16(this->pec);
+    spi->beginTransaction(*spi_settings);
+    spi->transfer(command, 2);
+    spi->transfer16(this->pec);
     digitalWrite(this->cs, HIGH);
 }
 
 void ADBMS1818::write_command(uint8_t command[2], uint8_t *data){
+    this->wake_up();
     this->pec_15(command, 2);
     digitalWrite(this->cs, LOW);
-    spi.transfer(command, 2);
-    spi.transfer16(this->pec);
+    spi->beginTransaction(*spi_settings);
+    spi->transfer(command, 2);
+    spi->transfer16(this->pec);
     for(unsigned i = this->n; i>0; i--){
         for(unsigned j=0;j<this->byte_reg;j++){
-            spi.transfer(data[j]);
+            spi->transfer(data[j]);
         }
         this->pec_15(data+(this->n - i)*this->byte_reg, this->byte_reg);
-        spi.transfer16(this->pec);
+        spi->transfer16(this->pec);
     }
     digitalWrite(this->cs, HIGH);
 }
 
 bool ADBMS1818::read_command(uint8_t command[2], uint8_t *data){
+    this->wake_up();
     this->pec_15(command, 2);
     digitalWrite(this->cs, LOW);
-    spi.transfer(command, 2);
-    spi.transfer16(this->pec);
+    spi->beginTransaction(*spi_settings);
+    spi->transfer(command, 2);
+    spi->transfer16(this->pec);
     uint16_t test_pec;
     bool test = true;
     for(unsigned i= 0; i<this->n;i++){
         for(unsigned j=i*(this->byte_reg+2); j< (i+1)*(this->byte_reg+2);j++){
-            data[j] = spi.transfer(0x00);
+            data[j] = spi->transfer(0x00);
         }
         this->pec_15(data+(this->byte_reg+2)*i, this->byte_reg);
         test_pec = data[i*(this->byte_reg+2)+6];
@@ -189,12 +196,13 @@ bool ADBMS1818::read_command(uint8_t command[2], uint8_t *data){
 }
 
 
-void ADBMS1818::wake_up(uint8_t dur){
-    digitalWrite(cs, HIGH);
-    delay(dur);
-    digitalWrite(cs, LOW);
-    delay(dur);
-    digitalWrite(cs, HIGH);
+void ADBMS1818::wake_up(uint32_t dur){
+    for(int i=0;i<this->n;i++){
+        digitalWrite(this->cs, LOW);
+        delayMicroseconds(dur);
+        digitalWrite(this->cs, HIGH);
+        delayMicroseconds(10);
+    }
 }
 
 void ADBMS1818::set_bits(std::string bit_key, uint8_t bit_value){
@@ -239,10 +247,8 @@ void ADBMS1818::set_config_reg_b(){
 
 
 void ADBMS1818::begin(){
-    this->wake_up();
     this->set_config_reg_a();
     this->set_config_reg_b();
-    
 }
 
 uint16_t ADBMS1818::config_bit(uint16_t command, uint8_t pos, bool bit){
@@ -527,17 +533,19 @@ float ADBMS1818::convert_voltage(uint16_t voltage){
 }
 
 bool ADBMS1818::pladc_rdy(){
+    this->wake_up();
     uint16_t command = this->commands["PLADC"];
     uint8_t command2[2];
     this->u16_to_u8(command, command2);
     this->pec_15(command2, 2);
     digitalWrite(this->cs, LOW);
-    spi.transfer(command2, 2);
-    spi.transfer16(this->pec);
+    spi->beginTransaction(*spi_settings);
+    spi->transfer(command2, 2);
+    spi->transfer16(this->pec);
     uint8_t result=0;
     unsigned long time = micros();
     while((micros()-time)<=this->pladc_timeout&&(result==0)){
-        result = spi.transfer(0x00);
+        result = spi->transfer(0x00);
     }
     digitalWrite(this->cs, HIGH);
     return result != 0;

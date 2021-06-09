@@ -37,21 +37,25 @@ const uint16_t crc15Table[256] {0x0,0xc599, 0xceab, 0xb32, 0xd8cf, 0x1d56, 0x166
 
 //use default configuration for now.
 class ADBMS1818{
-    private:
+    protected:
         SPIClass *spi;
         SPISettings *spi_settings;
         static std::map<std::string, uint16_t> commands;
         static std::map<std::string, uint8_t> commands_bits;
         static void u16_to_u8(uint16_t x, uint8_t *y);
         uint32_t f;
+        uint16_t rbuff_size, wbuff_size;
         uint8_t cs, n, byte_reg;
         uint8_t *read_buff;
         uint8_t *write_buff;
+        
         uint8_t pec[2];
+        
         //configuration bits for write commands
+        uint8_t *sctl, *pwm;
         bool adcopt, refon, dtmen, mute, fdrf;
         unsigned long pladc_timeout;
-        uint8_t dcto;
+        uint8_t dcto, ps;
         uint16_t vuv, vov, gpiox;
         uint32_t dcc;
         void pec_15(uint8_t *tab, uint8_t len);
@@ -68,9 +72,9 @@ class ADBMS1818{
         
     public:
         
-        ADBMS1818(uint8_t port,  uint8_t csPin, uint32_t freq= 1000000, uint8_t n = 1, uint8_t br = 6);
-        ADBMS1818(int8_t spi_pins[4], uint32_t freq= 1000000, uint8_t n = 1, uint8_t br = 6);
-        ADBMS1818(uint8_t csPin, uint32_t freq= 1000000, uint8_t n = 1, uint8_t br = 6);
+        explicit ADBMS1818(uint8_t port,  uint8_t csPin, uint8_t n = 1, uint32_t freq= 1000000, uint8_t br = 6);
+        explicit ADBMS1818(int8_t spi_pins[4], uint8_t n = 1, uint32_t freq= 1000000, uint8_t br = 6);
+        explicit ADBMS1818(uint8_t csPin, uint8_t n = 1, uint32_t freq= 1000000, uint8_t br = 6);
         //couple setters
         void set_device_count(uint8_t n);
         void begin();
@@ -93,6 +97,12 @@ class ADBMS1818{
         void start_cv_gpio12_conversion();
         void start_cv_sc_conversion();
         bool pladc_rdy();
+        void set_sct_value(uint8_t *values);
+        void set_sct_pin_value(uint8_t value, uint8_t pin, uint8_t n=0);//n is an index (starting from 0) of ADBMS1818 device connected in daisy chain
+        void set_pwm_value(uint8_t *values);                            //pin is an index of 1-18 cells starting from 1
+        void set_pwm_pin_value(uint8_t value, uint8_t pin, uint8_t n=0);
+        void write_sct_reg();
+        void write_pwm_reg();
         uint16_t ** read_cv_adc();
         uint16_t ** read_aux_adc();
         float convert_voltage(uint16_t voltage);

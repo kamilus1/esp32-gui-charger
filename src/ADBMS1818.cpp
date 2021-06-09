@@ -66,31 +66,34 @@ void ADBMS1818::u16_to_u8(uint16_t x, uint8_t *y){
 }
 
 
-ADBMS1818::ADBMS1818(uint8_t port, uint8_t cspin, uint32_t freq, uint8_t n, uint8_t br): f(freq), cs(cspin), n(n), byte_reg(br){
+ADBMS1818::ADBMS1818(uint8_t port, uint8_t cspin, uint8_t n, uint32_t freq,  uint8_t br): f(freq), cs(cspin), n(n), byte_reg(br){
     spi = new SPIClass(port);
     spi->begin();
     this->init();
 }
-ADBMS1818::ADBMS1818(int8_t spi_pins[4],uint32_t freq, uint8_t n, uint8_t br): f(freq), cs(spi_pins[3]), n(n), byte_reg(br){
+ADBMS1818::ADBMS1818(int8_t spi_pins[4], uint8_t n, uint32_t freq,  uint8_t br): f(freq), cs(spi_pins[3]), n(n), byte_reg(br){
     spi = new SPIClass();
-    spi->begin(spi_pins[0], spi_pins[1], spi_pins[2], -1);
+    spi->begin(spi_pins[0], spi_pins[1], spi_pins[2], cs);
     this->init();
 }
-ADBMS1818::ADBMS1818(uint8_t cspin, uint32_t freq, uint8_t n, uint8_t br): f(freq), cs(cspin), n(n), byte_reg(br){
+ADBMS1818::ADBMS1818(uint8_t cspin, uint8_t n, uint32_t freq,  uint8_t br): f(freq), cs(cspin), n(n), byte_reg(br){
     spi = new SPIClass();
     spi->begin();
     
     this->init();
 }
 void ADBMS1818::init(){
-    uint16_t rbuff_size = (this->byte_reg+2)*this->n;
-    uint16_t wbuff_size = (this->byte_reg)*this->n;
-    this->read_buff = new uint8_t [rbuff_size];
-    this->write_buff = new uint8_t [wbuff_size];
+    this->rbuff_size = (this->byte_reg+2)*this->n;
+    this->wbuff_size = (this->byte_reg)*this->n;
+    this->read_buff = new uint8_t [this->rbuff_size];
+    this->write_buff = new uint8_t [this->wbuff_size];
+    this->sctl = new uint8_t [this->n*9];
+    this->pwm = new uint8_t [this->n*9];
     this->vuv = 0;
     this->vov = 0;
-    this->dcc = 0;
+    this->dcc = 0x0003ffff; //allow discharge
     this->dcto = 0;
+    this->ps = 0;
     this->gpiox = 0x01ff;
     this->adcopt = false;
     this->refon = false;
@@ -117,14 +120,17 @@ void ADBMS1818::set_device_count(uint8_t n){
     this->n = n;
     delete[] this->write_buff;
     delete[] this->read_buff;
-    uint16_t rbuff_size = (this->byte_reg+2)*this->n;
-    uint16_t wbuff_size = (this->byte_reg)*this->n;
-    this->read_buff = new uint8_t [rbuff_size];
-    this->write_buff = new uint8_t [wbuff_size];
+    delete[] this->sctl;
+    delete[] this->pwm;
+    this->rbuff_size = (this->byte_reg+2)*this->n;
+    this->wbuff_size = (this->byte_reg)*this->n;
+    this->read_buff = new uint8_t [this->rbuff_size];
+    this->write_buff = new uint8_t [this->wbuff_size];
+    this->sctl = new uint8_t [this->n*9];
+    this->pwm = new uint8_t [this->n*9];
 }
 
 void ADBMS1818::poll_command(uint8_t command[2]){
-    this->wake_up();
     this->pec_15(command, 2);
     spi->beginTransaction(*spi_settings);
     digitalWrite(this->cs, LOW);
@@ -135,7 +141,6 @@ void ADBMS1818::poll_command(uint8_t command[2]){
 }
 
 void ADBMS1818::write_command(uint8_t command[2], uint8_t *data){
-    this->wake_up();
     this->pec_15(command, 2);
     spi->beginTransaction(*spi_settings);
     digitalWrite(this->cs, LOW);
@@ -154,7 +159,6 @@ void ADBMS1818::write_command(uint8_t command[2], uint8_t *data){
 }
 
 bool ADBMS1818::read_command(uint8_t command[2], uint8_t *data){
-    this->wake_up();
     this->pec_15(command, 2);
     spi->beginTransaction(*spi_settings);
     digitalWrite(this->cs, LOW);
@@ -197,6 +201,8 @@ void ADBMS1818::set_bits(std::string bit_key, uint8_t bit_value){
 }
 
 void ADBMS1818::set_config_reg_a(){
+    this->wake_up();
+    digitalWrite(this->cs, LOW);
     for(int i=0;i<this->byte_reg*this->n;i++){
         this->write_buff[i] = 0x00;
     }
@@ -209,7 +215,7 @@ void ADBMS1818::set_config_reg_a(){
         this->write_buff[(i+2)] |= (uint8_t) ( (this->vov & 0x000f) << 4);
         this->write_buff[(i+3)] = (uint8_t) (this->vov >> 4);
         this->write_buff[(i+4)] = (uint8_t)(this->dcc & 0x00ff);
-        this->write_buff[(i+5)] = (uint8_t)(this->dcc >> 8);
+        this->write_buff[(i+5)] = (uint8_t)((this->dcc >> 8) & 0x0f);
         this->write_buff[(i+5)] |= (uint8_t)(this->dcto << 4);
     }
     
@@ -217,24 +223,29 @@ void ADBMS1818::set_config_reg_a(){
     command[0] = (uint8_t) this->commands["WRCFGA"] & 0x00FF;
     command[1] = (uint8_t) this->commands["WRCFGA"] >> 8 ;
     this->write_command(command, this->write_buff);
+    digitalWrite(this->cs, HIGH);
 }
 
 void ADBMS1818::set_config_reg_b(){
+    this->wake_up();
+    digitalWrite(this->cs, LOW);
     for(int i=0;i<this->byte_reg*this->n;i++){
         this->write_buff[i] = 0x00;
     }
     for(int i=0;i<this->byte_reg*this->n;i+=this->byte_reg){
-        
+        this->write_buff[i] = (uint8_t) ((this->dcc >> 8) & 0xf0);
+        this->write_buff[(i+1)] = (uint8_t) ((this->dcc >> 15));
     }
     uint8_t command[2];
     command[0] = (uint8_t) this->commands["WRCFGB"] & 0x00FF;
     command[1] = (uint8_t) this->commands["WRCFGB"] >> 8 ;
     this->write_command(command, this->write_buff);
+    digitalWrite(this->cs, HIGH);
 }
 
 
 void ADBMS1818::begin(){
-    digitalWrite(cs, HIGH);
+    digitalWrite(this->cs, HIGH);
     this->set_config_reg_a();
     this->set_config_reg_b();
 }
@@ -281,6 +292,7 @@ uint16_t ADBMS1818::config_pup_bit(uint16_t command){
     return command;
 }
 void ADBMS1818::start_cv_adc_conversion(){
+    this->wake_up();
     uint16_t command = this->commands["ADCV"];
     command = this->config_md_bits(command);
     command = this->config_dcp_bit(command);
@@ -294,34 +306,41 @@ void ADBMS1818::start_cv_adc_conversion(){
     this->poll_command(command2);
 }
 void ADBMS1818::start_open_wire_conversion(){
+    this->wake_up();
     uint16_t command = this->commands["ADOW"];
     command = this->config_md_bits(command);
     command = this->config_dcp_bit(command);
     command = this->config_ch_bits(command, "CH");
     command = this->config_pup_bit(command);
     uint8_t command2[2];
+    digitalWrite(this->cs, LOW);
     this->u16_to_u8(this->commands["Mute"], command2);
     this->poll_command(command2);
     this->u16_to_u8(command, command2);
     this->poll_command(command2);
     this->u16_to_u8(this->commands["Unmute"], command2);
     this->poll_command(command2);
+    digitalWrite(this->cs, HIGH);
 }
 
 void ADBMS1818::start_self_test_conversion(){
+    this->wake_up();
     uint16_t command = this->commands["CVST"];
     command = this->config_md_bits(command);
     command = this->config_st_bits(command);
     uint8_t command2[2];
     this->u16_to_u8(this->commands["Mute"], command2);
+    digitalWrite(this->cs, LOW);
     this->poll_command(command2);
     this->u16_to_u8(command, command2);
     this->poll_command(command2);
     this->u16_to_u8(this->commands["Unmute"], command2);
     this->poll_command(command2);
+     digitalWrite(this->cs, HIGH);
 }
 
 void ADBMS1818::start_overlap_conversion(){
+    this->wake_up();
     uint16_t command = this->commands["ADOL"];
     command = this->config_md_bits(command);
     command = this->config_dcp_bit(command);
@@ -335,6 +354,7 @@ void ADBMS1818::start_overlap_conversion(){
 }
 
 void ADBMS1818::start_gpio_adc_conversion(){
+    this->wake_up();
     uint16_t command = this->commands["ADAX"];
     command = this->config_md_bits(command);
     command = this->config_ch_bits(command, "CHG");
@@ -347,6 +367,7 @@ void ADBMS1818::start_gpio_adc_conversion(){
     this->poll_command(command2);
 }
 void ADBMS1818::start_gpio_adc_conversion_dr(){
+    this->wake_up();
     uint16_t command = this->commands["ADAXD"];
     command = this->config_md_bits(command);
     command = this->config_ch_bits(command, "CHG");
@@ -359,6 +380,7 @@ void ADBMS1818::start_gpio_adc_conversion_dr(){
     this->poll_command(command2);
 }
 void ADBMS1818::start_gpio_open_wire_conversion(){
+    this->wake_up();
     uint16_t command = this->commands["AXOW"];
     command = this->config_md_bits(command);
     command = this->config_ch_bits(command, "CHG");
@@ -372,6 +394,7 @@ void ADBMS1818::start_gpio_open_wire_conversion(){
     this->poll_command(command2);
 }
 void ADBMS1818::start_self_test_gpio_conversion(){
+    this->wake_up();
     uint16_t command = this->commands["AXST"];
     command = this->config_md_bits(command);
     command = this->config_st_bits(command);
@@ -384,6 +407,7 @@ void ADBMS1818::start_self_test_gpio_conversion(){
     this->poll_command(command2);
 }
 void ADBMS1818::start_status_adc_conversion(){
+    this->wake_up();
     uint16_t command = this->commands["ADSTAT"];
     command = this->config_md_bits(command);
     command = this->config_ch_bits(command, "CHST");
@@ -396,6 +420,7 @@ void ADBMS1818::start_status_adc_conversion(){
     this->poll_command(command2);
 }
 void ADBMS1818::start_status_adc_dr_conversion(){
+    this->wake_up();
     uint16_t command = this->commands["ADSTATD"];
     command = this->config_md_bits(command);
     command = this->config_ch_bits(command, "CHST");
@@ -409,6 +434,7 @@ void ADBMS1818::start_status_adc_dr_conversion(){
 }
 
 void ADBMS1818::start_self_test_status_conversion(){
+    this->wake_up();
     uint16_t command = this->commands["STATST"];
     command = this->config_md_bits(command);
     command = this->config_st_bits(command);
@@ -421,6 +447,7 @@ void ADBMS1818::start_self_test_status_conversion(){
     this->poll_command(command2);
 }
 void ADBMS1818::start_cv_gpio12_conversion(){
+    this->wake_up();
     uint16_t command = this->commands["ADCVAX"];
     command = this->config_md_bits(command);
     command = this->config_dcp_bit(command);
@@ -433,6 +460,7 @@ void ADBMS1818::start_cv_gpio12_conversion(){
     this->poll_command(command2);
 }
 void ADBMS1818::start_cv_sc_conversion(){
+    this->wake_up();
     uint16_t command = this->commands["ADCVSC"];
     command = this->config_md_bits(command);
     command = this->config_dcp_bit(command);
@@ -446,6 +474,7 @@ void ADBMS1818::start_cv_sc_conversion(){
 }
 
 uint16_t** ADBMS1818::read_cv_adc(){
+    this->wake_up();
     uint16_t **cells_voltage = new uint16_t *[this->n];
     for(int i=0;i<this->n;i++){
         cells_voltage[i] = new uint16_t [18];
@@ -472,6 +501,7 @@ uint16_t** ADBMS1818::read_cv_adc(){
     return cells_voltage;
 }
 uint16_t ** ADBMS1818::read_aux_adc(){
+    this->wake_up();
     uint16_t **aux_voltage = new uint16_t *[this->n];
     for(int i=0;i<this->n;i++){
         aux_voltage[i] = new uint16_t [9];
@@ -517,7 +547,7 @@ uint16_t ** ADBMS1818::read_aux_adc(){
 }
 
 float ADBMS1818::convert_voltage(uint16_t voltage){
-    return 0.000001 * (float)voltage;
+    return 0.0001 * (float)voltage;
 }
 
 bool ADBMS1818::pladc_rdy(){
@@ -527,7 +557,7 @@ bool ADBMS1818::pladc_rdy(){
     this->u16_to_u8(command, command2);
     this->pec_15(command2, 2);
     spi->beginTransaction(*spi_settings);
-    digitalWrite(this->cs, LOW);
+    
     
     spi->transfer(command2, 2);
     spi->transfer(this->pec, 2);
@@ -539,4 +569,63 @@ bool ADBMS1818::pladc_rdy(){
     digitalWrite(this->cs, HIGH);
     spi->endTransaction();
     return result != 0;
+}
+
+void ADBMS1818::set_sct_value(uint8_t *values){
+    for(uint16_t i=0; i<this->n*9;i++){
+        this->sctl[i] = values[i];
+    }
+}
+
+void ADBMS1818::set_pwm_value(uint8_t *values){
+    for(uint16_t i=0; i<this->n*9;i++){
+        this->pwm[i] = values[i];
+    }
+}
+
+void ADBMS1818::set_sct_pin_value(uint8_t value, uint8_t pin, uint8_t n){
+    this->sctl[9*n + pin - 1] |= (pin % 2)? (0xF0 & value): (0x0F & value);
+}
+void ADBMS1818::set_pwm_pin_value(uint8_t value, uint8_t pin, uint8_t n){
+    this->pwm[9*n + pin - 1] |= (pin % 2)? (0xF0 & value): (0x0F & value);
+}
+void ADBMS1818::write_pwm_reg(){
+    for(uint16_t i=0; i<this->n;i++){
+        for(uint16_t j=0; j<6;j++){
+            this->write_buff[6*i+j] = this->pwm[9*i+j];
+        }
+    }
+    uint8_t command[2];
+    this->u16_to_u8(this->commands["WRPWM"], command);
+    this->write_command(command, this->write_buff);
+    for(uint16_t i=0; i<this->n;i++){
+        for(uint16_t j=0;j<3;j++){
+            this->write_buff[6*i + j] = this->pwm[9*i+6+j];
+        }
+        for(uint16_t j=0;j<3;j++){
+            this->write_buff[6*i + 3 + j] = this->sctl[9*i+6+j];
+        }
+    }
+    this->u16_to_u8(this->commands["WRPSB"], command);
+    this->write_command(command, this->write_buff);
+}
+void ADBMS1818::write_sct_reg(){
+    for(uint16_t i=0; i<this->n;i++){
+        for(uint16_t j=0; j<6;j++){
+            this->write_buff[6*i+j] = this->sctl[9*i+j];
+        }
+    }
+    uint8_t command[2];
+    this->u16_to_u8(this->commands["WRSCTRL"], command);
+    this->write_command(command, this->write_buff);
+    for(uint16_t i=0; i<this->n;i++){
+        for(uint16_t j=0;j<3;j++){
+            this->write_buff[6*i + j] = this->pwm[9*i+6+j];
+        }
+        for(uint16_t j=0;j<3;j++){
+            this->write_buff[6*i + 3 + j] = this->sctl[9*i+6+j];
+        }
+    }
+    this->u16_to_u8(this->commands["WRPSB"], command);
+    this->write_command(command, this->write_buff);
 }

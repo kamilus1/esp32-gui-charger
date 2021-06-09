@@ -1,18 +1,19 @@
 #include <Arduino.h>
 #include <stdio.h>
 #include "GUIslice.h"
-#include "ADBMS1818.hpp"
+#include "ADBMS1818Class.hpp"
 #define BAUD_RATE 115200
 #define N 1
-#define CS 15
-int8_t pins[4] = {14,12,13,15};//tab for custom SPI Pins. sck, miso, mosi, cs is a pin order. In this tab i use HSPI port SPI pins
-//ADBMS1818 adbms(pins); //constructor with modified pins
-ADBMS1818 adbms((uint8_t)VSPI, (uint8_t)CS); //construcot with modified CS pin and spi port
+#define CS 5
+
+
+int8_t pins[4] = {18,19,23,CS};//tab for custom SPI Pins. sck, miso, mosi, cs is a pin order. In this tab i use HSPI port SPI pins
+ADBMS1818Class adbms(pins); //constructor with modified pins
+//ADBMS1818 adbms((uint8_t)FSPI, (uint8_t)CS); //construcot with modified CS pin and spi port
 //ADBMS1818 adbms(15); //constructor with default SPI and CS pin modifed
 void setup() {
   pinMode(CS, OUTPUT);
   // put your setup code here, to run once:
-  adbms.set_device_count(N);
   Serial.begin(BAUD_RATE);
   adbms.begin();
 }
@@ -34,6 +35,69 @@ d - read_cv_adc
 e - read_aux_adc
 f - pladc_rdy (this command returns true if conversion is ready)
 */
+
+void conversions_window(){
+  if(Serial.available() > 0){
+    char c = Serial.read();
+    switch(c){
+      case '0':
+        Serial.println("Cell voltage conversion begin");
+        adbms.start_cv_adc_conversion();
+        break;
+      case '1':
+        Serial.println("Open wire conversion begin");
+        adbms.start_open_wire_conversion();
+        break;
+      case '2':
+        Serial.println("Self test conversion begin");
+        adbms.start_self_test_conversion();
+        break;
+      case '3':
+        Serial.println("Overlap conversion begin");
+        adbms.start_overlap_conversion();
+        break;
+      case '4':
+        Serial.println("GPIO conversion begin");
+        adbms.start_gpio_adc_conversion();
+        break;
+      case '5':
+        Serial.println("GPIO and digital redundancy conversion begin");
+        adbms.start_gpio_adc_conversion_dr();
+        break;
+      case '6':
+        Serial.println("GPIO open wire conversion begin");
+        adbms.start_gpio_open_wire_conversion();
+        break;
+      case '7':
+        Serial.println("Self test and gpio conversion begin");
+        adbms.start_self_test_gpio_conversion();
+        break;
+      case '8':
+        Serial.println("Status conversion begin");
+        adbms.start_status_adc_conversion();
+        break;
+      case '9':
+        Serial.println("Status and digital redundancy conversion begin");
+        adbms.start_status_adc_dr_conversion();
+        break;    
+      case 'a':
+        Serial.println("Self test status conversion begin");
+        adbms.start_self_test_status_conversion();
+        break;
+      case 'b':
+        Serial.println("Cell voltage and GPIO 1 2 conversion begin");
+        adbms.start_cv_gpio12_conversion();
+        break;
+      case 'c':
+        Serial.println("Cell voltage and SC conversion begin");
+        adbms.start_cv_sc_conversion();
+        break;  
+      default :
+        break;
+    }
+}
+}
+
 void loop() {
   // put your main code here, to run repeatedly:
   uint16_t **data;

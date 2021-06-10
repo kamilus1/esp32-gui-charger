@@ -16,7 +16,7 @@ const int resolution = 12; //12 bit resolution
 const int8_t pwm_pins[3] = {25, 26, 27};
 
 //adbms pins and object
-const int8_t adbms_pins[4] = {18,19,23,CS};//tab for custom SPI Pins. sck, miso, mosi, cs is a pin order. In this tab i use HSPI port SPI pins
+int8_t adbms_pins[4] = {18,19,23,CS};//tab for custom SPI Pins. sck, miso, mosi, cs is a pin order. In this tab i use HSPI port SPI pins
 ADBMS1818Class adbms(adbms_pins); //constructor with modified pins
 //ADBMS1818 adbms((uint8_t)FSPI, (uint8_t)CS); //construcot with modified CS pin and spi port
 //ADBMS1818 adbms(15); //constructor with default SPI and CS pin modifed

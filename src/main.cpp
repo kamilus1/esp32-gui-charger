@@ -6,12 +6,27 @@
 #define N 1
 #define CS 5
 
+//pwm variables
+const int freq = 10000; //10 khz
+const int pwm_channel = 0;
+const int resolution = 12; //12 bit resolution
 
-int8_t pins[4] = {18,19,23,CS};//tab for custom SPI Pins. sck, miso, mosi, cs is a pin order. In this tab i use HSPI port SPI pins
-ADBMS1818Class adbms(pins); //constructor with modified pins
+//pwm pins
+
+const int8_t pwm_pins[3] = {25, 26, 27};
+
+//adbms pins and object
+const int8_t adbms_pins[4] = {18,19,23,CS};//tab for custom SPI Pins. sck, miso, mosi, cs is a pin order. In this tab i use HSPI port SPI pins
+ADBMS1818Class adbms(adbms_pins); //constructor with modified pins
 //ADBMS1818 adbms((uint8_t)FSPI, (uint8_t)CS); //construcot with modified CS pin and spi port
 //ADBMS1818 adbms(15); //constructor with default SPI and CS pin modifed
 void setup() {
+  //setup PWM
+  ledcSetup(pwm_channel, freq, resolution);
+  for(uint8_t i=0; i<3;i++){
+    ledcAttachPin(pwm_pins[i], pwm_channel);
+  }
+
   pinMode(CS, OUTPUT);
   // put your setup code here, to run once:
   Serial.begin(BAUD_RATE);

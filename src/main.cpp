@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "GUIslice.h"
 #include "ADBMS1818Class.hpp"
+#include "ina238.hpp"
 #define BAUD_RATE 115200
 #define N 1
 #define CS 5

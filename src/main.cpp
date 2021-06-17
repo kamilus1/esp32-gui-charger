@@ -21,6 +21,8 @@ int8_t adbms_pins[4] = {18,19,23,CS};//tab for custom SPI Pins. sck, miso, mosi,
 ADBMS1818Class adbms(adbms_pins); //constructor with modified pins
 //ADBMS1818 adbms((uint8_t)FSPI, (uint8_t)CS); //construcot with modified CS pin and spi port
 //ADBMS1818 adbms(15); //constructor with default SPI and CS pin modifed
+
+ina238 ina((uint16_t)0x01);
 void setup() {
   //setup PWM
   ledcSetup(pwm_channel, freq, resolution);

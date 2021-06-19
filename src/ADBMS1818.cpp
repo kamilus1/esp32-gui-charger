@@ -202,7 +202,7 @@ void ADBMS1818::set_bits(std::string bit_key, uint8_t bit_value){
 
 void ADBMS1818::set_config_reg_a(){
     this->wake_up();
-    digitalWrite(this->cs, LOW);
+    
     for(int i=0;i<this->byte_reg*this->n;i++){
         this->write_buff[i] = 0x00;
     }
@@ -218,7 +218,7 @@ void ADBMS1818::set_config_reg_a(){
         this->write_buff[(i+5)] = (uint8_t)((this->dcc >> 8) & 0x0f);
         this->write_buff[(i+5)] |= (uint8_t)(this->dcto << 4);
     }
-    
+    digitalWrite(this->cs, LOW);
     uint8_t command[2];
     command[0] = (uint8_t) this->commands["WRCFGA"] & 0x00FF;
     command[1] = (uint8_t) this->commands["WRCFGA"] >> 8 ;
@@ -583,13 +583,19 @@ void ADBMS1818::set_pwm_value(uint8_t *values){
     }
 }
 
-void ADBMS1818::set_sct_pin_value(uint8_t value, uint8_t pin, uint8_t n){
-    this->sctl[9*n + pin - 1] |= (pin % 2)? (0xF0 & value): (0x0F & value);
+void ADBMS1818::set_sct_pin_value(uint8_t value, uint8_t pin, uint8_t n1){
+    if(n1 < this->n && pin <= 18){
+        this->sctl[9*n1 + (pin-1/2) ] |= (pin % 2)? (0xF0 & value): (0x0F & value);
+    }
+    
 }
-void ADBMS1818::set_pwm_pin_value(uint8_t value, uint8_t pin, uint8_t n){
-    this->pwm[9*n + pin - 1] |= (pin % 2)? (0xF0 & value): (0x0F & value);
+void ADBMS1818::set_pwm_pin_value(uint8_t value, uint8_t pin, uint8_t n1){
+    if(n1 < this->n && pin <= 18){
+    this->pwm[9*n1 + (pin-1/2)] |= (pin % 2)? (0xF0 & value): (0x0F & value);
+    }
 }
 void ADBMS1818::write_pwm_reg(){
+    this->wake_up();
     for(uint16_t i=0; i<this->n;i++){
         for(uint16_t j=0; j<6;j++){
             this->write_buff[6*i+j] = this->pwm[9*i+j];
@@ -610,6 +616,7 @@ void ADBMS1818::write_pwm_reg(){
     this->write_command(command, this->write_buff);
 }
 void ADBMS1818::write_sct_reg(){
+    this->wake_up();
     for(uint16_t i=0; i<this->n;i++){
         for(uint16_t j=0; j<6;j++){
             this->write_buff[6*i+j] = this->sctl[9*i+j];
@@ -628,4 +635,12 @@ void ADBMS1818::write_sct_reg(){
     }
     this->u16_to_u8(this->commands["WRPSB"], command);
     this->write_command(command, this->write_buff);
+}
+
+void ADBMS1818::enable_dcc(){
+    this->dcc = 0x0003ffff;
+}
+
+void ADBMS1818::disable_dcc(){
+    this->dcc = 0x00000000;
 }

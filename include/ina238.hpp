@@ -11,6 +11,7 @@ class ina238{
     public:
         ina238(uint16_t addr, uint16_t r_shunt = 100, uint8_t sda=21, uint8_t scl=22, uint32_t freq=400000,  uint8_t i2c_bus = 0);
         ina238(uint16_t addr, TwoWire *two_wire, uint16_t r_shunt = 100);
+        void begin();
         bool device_found();
         void write_command(uint8_t *data, uint8_t qnt);
         uint8_t *read_command(uint8_t *data, uint8_t wqnt, uint8_t rqnt);

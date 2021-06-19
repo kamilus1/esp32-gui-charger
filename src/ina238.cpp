@@ -100,3 +100,11 @@ float ina238::read_current(){
     curr_lsb /= 13107.2*1000000;
     return ((float)curr) * curr_lsb;
 }
+
+void ina238::begin(){
+    if(this->device_found()){
+        this->write_config1();
+        this->write_adc_config2();
+        this->write_currlsbcalc_3();
+    }
+}

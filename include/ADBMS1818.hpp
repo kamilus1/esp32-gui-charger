@@ -82,6 +82,8 @@ class ADBMS1818{
         void wake_up_idle();
         void set_config_reg_a();
         void set_config_reg_b();
+        void enable_dcc();
+        void disable_dcc();
         void set_bits(std::string bit_key, uint8_t bit_value);
         void start_cv_adc_conversion(); //for default mode with 7khz  freq it takes about 2.3 ms for all cells conversion. 
         void start_open_wire_conversion();
@@ -98,9 +100,9 @@ class ADBMS1818{
         void start_cv_sc_conversion();
         bool pladc_rdy();
         void set_sct_value(uint8_t *values);
-        void set_sct_pin_value(uint8_t value, uint8_t pin, uint8_t n=0);//n is an index (starting from 0) of ADBMS1818 device connected in daisy chain
+        void set_sct_pin_value(uint8_t value, uint8_t pin, uint8_t n1=0);//n is an index (starting from 0) of ADBMS1818 device connected in daisy chain
         void set_pwm_value(uint8_t *values);                            //pin is an index of 1-18 cells starting from 1
-        void set_pwm_pin_value(uint8_t value, uint8_t pin, uint8_t n=0);
+        void set_pwm_pin_value(uint8_t value, uint8_t pin, uint8_t n1=0);
         void write_sct_reg();
         void write_pwm_reg();
         uint16_t ** read_cv_adc();

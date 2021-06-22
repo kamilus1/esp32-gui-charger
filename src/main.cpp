@@ -72,14 +72,13 @@ void setup() {
   tft.begin();
   tft.setRotation(0);
   tft.fillScreen(ILI9341_CYAN);
-  analogReadResolution(10);
   //old_point = ts.getPoint();
   /*
   lv_init();
   lv_disp_draw_buf_init(&disp_buf, buf, NULL, screen_width * 10);
   my_disp_init();
   my_input_init();
-
+ 
   label = lv_label_create(lv_scr_act());
   lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
   lv_label_set_recolor(label, true);

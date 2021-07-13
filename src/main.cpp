@@ -19,7 +19,7 @@
 #define CS 5
 #define TOUCH_IRQ 16
 
-#define TOUCH_THRESHOLD 700
+#define TOUCH_THRESHOLD 600
 
 //pwm variables
 const int freq = 10000; //10 khz
@@ -67,6 +67,8 @@ void setup() {
   pinMode(TOUCH_IRQ, INPUT);
   tft.init();
   tft.setRotation(0);
+  uint16_t calData[5] = { 275, 3620, 264, 3532, 1 };
+   tft.setTouch( calData );
   
   //tft.fillScreen(TFT_GREEN);
   
@@ -104,6 +106,7 @@ void setup() {
 
 void loop() {
     lv_timer_handler();
+    delay(5);
 }
 
 

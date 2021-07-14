@@ -4,6 +4,8 @@ namespace gui{
     void init_styles(){
         init_button_pr_style();
         init_button_style();
+        init_button_tr_style();
+        init_font_style();
     }
     void init_button_style(){
         lv_style_init(&button_style);
@@ -40,6 +42,16 @@ namespace gui{
         lv_style_set_shadow_ofs_y(&button_pr_style, 3);
         lv_style_set_bg_color(&button_pr_style, lv_palette_darken(LV_PALETTE_BLUE, 2));
         lv_style_set_bg_grad_color(&button_pr_style, lv_palette_darken(LV_PALETTE_BLUE, 4));
+    }
+    void init_button_tr_style(){
+        static lv_style_transition_dsc_t trans;
+        static lv_style_prop_t props[] = {LV_STYLE_OUTLINE_WIDTH, LV_STYLE_OUTLINE_OPA,(lv_style_prop_t) 0};
+        lv_style_transition_dsc_init(&trans, props, lv_anim_path_linear, 300, 0, NULL);
+        lv_style_set_transition(&button_pr_style, &trans);
+    }
+
+    void init_font_style(){
+        font_style = lv_font_montserrat_16;
     }
 
 };

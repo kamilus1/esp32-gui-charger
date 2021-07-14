@@ -41,16 +41,14 @@ ADBMS1818Class adbms = ADBMS1818Class(adbms_pins); //constructor with modified p
 //https://www.ti.com/lit/ds/symlink/ina238-q1.pdf?ts=1623446444912#page=15
 ina238 ina((uint16_t)0x40);
 //lvgt gui vars
-static const uint32_t screenWidth  = 240;
-static const uint32_t screenHeight = 320;
+static const uint32_t screenWidth  = 320;
+static const uint32_t screenHeight = 240;
 
 static lv_disp_draw_buf_t draw_buf;
 static lv_color_t buf[ screenWidth * 10 ];
 
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
 void my_touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t*data);
-//void my_disp_init();
-//void my_input_init();
 static void event_handler(lv_event_t *e);
 void lv_example_btn_2();
 uint16_t touchX, touchY;
@@ -66,9 +64,9 @@ void setup() {
   pinMode(CS, OUTPUT);
   pinMode(TOUCH_IRQ, INPUT);
   tft.init();
-  tft.setRotation(0);
+  tft.setRotation(1);
   uint16_t calData[5] = { 275, 3620, 264, 3532, 1 };
-   tft.setTouch( calData );
+  tft.setTouch( calData );
   
   //tft.fillScreen(TFT_GREEN);
   
@@ -196,12 +194,13 @@ void lv_example_btn_2(void)
     lv_style_set_transition(&style_pr, &trans);
 
     lv_obj_t * btn1 = lv_btn_create(lv_scr_act());
-    lv_obj_remove_style_all(btn1);
+    lv_obj_remove_style_all(btn1);                                                                                                                                              
     lv_obj_add_event_cb(btn1, event_handler, LV_EVENT_ALL, NULL);                          /*Remove the style coming from the theme*/
     lv_obj_add_style(btn1, &style, 0);
     lv_obj_add_style(btn1, &style_pr, LV_STATE_PRESSED);
     lv_obj_set_size(btn1, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     lv_obj_center(btn1);
+    //lv_obj_align()
 
     lv_obj_t * label = lv_label_create(btn1);
     lv_label_set_text(label, "Button");

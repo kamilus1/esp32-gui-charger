@@ -1,11 +1,10 @@
-#include <gui_styles.hpp>
+#include "gui_styles.hpp"
 
 namespace gui{
     void init_styles(){
         init_button_pr_style();
         init_button_style();
         init_button_tr_style();
-        init_font_style();
     }
     void init_button_style(){
         lv_style_init(&button_style);
@@ -50,8 +49,6 @@ namespace gui{
         lv_style_set_transition(&button_pr_style, &trans);
     }
 
-    void init_font_style(){
-        font_style = lv_font_montserrat_16;
-    }
+    
 
 };

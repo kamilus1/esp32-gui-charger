@@ -102,7 +102,7 @@ void setup() {
 
 void loop() {
     lv_timer_handler();
-    delay(5);
+    delay(1);
 }
 
 

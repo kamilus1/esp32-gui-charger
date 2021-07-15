@@ -50,6 +50,7 @@ uint16_t touchX, touchY;
 
 
 
+
 void setup() {
   Serial.begin(BAUD_RATE);
   //setup PWM
@@ -71,6 +72,8 @@ void setup() {
  
   // put your setup code here, to run once:
   adbms.begin();
+  adbms.set_config_reg_a();
+  adbms.set_config_reg_b();
   //init setup of LVGL
   
   lv_init();
@@ -93,7 +96,7 @@ void setup() {
    //Initialize styles
    gui::init_demo_screen();
    gui::load_current();
-    
+    //lv_example_win_1();
 
 }
 
@@ -102,7 +105,7 @@ void setup() {
 
 void loop() {
     lv_timer_handler();
-    delay(1);
+    delay(5);
 }
 
 

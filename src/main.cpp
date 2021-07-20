@@ -44,22 +44,22 @@ void setup() {
   for(uint8_t i=0; i<3;i++){
     ledcAttachPin(pwm_pins[i], pwm_channel);
   }
-  
+  ina.begin();
   pinMode(CS, OUTPUT);
+  adbms.begin();
+  adbms.set_config_reg_a();
+  adbms.set_config_reg_b();
   tft.init();
   tft.setRotation(3);
   uint16_t calData[5] = { 275, 3620, 264, 3532, 1 };
   tft.setTouch( calData );
-  
-  //tft.fillScreen(TFT_GREEN);
+
   
  
   
  
   // put your setup code here, to run once:
-  adbms.begin();
-  adbms.set_config_reg_a();
-  adbms.set_config_reg_b();
+  
   //init setup of LVGL
   
   lv_init();
@@ -81,6 +81,7 @@ void setup() {
 
    //Initialize styles
   gui::init_styles();
+  gui::init_transition_screen();
 
 
    //gui::init_demo_screen();

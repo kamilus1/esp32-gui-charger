@@ -4,9 +4,11 @@ extern ina238 ina;
 
 namespace gui{
     void init_styles(){
+        state = 1;
         init_main_scr_style();
         init_main_btn_style();
         init_main_btn_pr_style();
+        init_prc_lbl_style();
     }
     void init_main_scr_style(){
         lv_style_init(&main_screen_style);
@@ -58,6 +60,14 @@ namespace gui{
         }
     }
 
+    void init_prc_lbl_style(){
+        lv_style_init(&process_label_style);
+        lv_style_set_text_color(&process_label_style, lv_palette_main(LV_PALETTE_YELLOW));
+        lv_style_set_bg_color(&process_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
+        lv_style_set_border_color(&process_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
+        lv_style_set_bg_grad_color(&process_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
+    }
+
 
     static void conversion_handler(lv_event_t *e){
         lv_event_code_t code = lv_event_get_code(e);
@@ -79,9 +89,42 @@ namespace gui{
         }
     }
 
+    static void charge_scr_switch_handler(lv_event_t *e){
+        state = 2;
+        load_transition();
+        init_process_screen();
+        load_current();
+    }
+    static void store_scr_switch_handler(lv_event_t *e){
+        state = 2;
+        load_transition();
+        init_process_screen(STORE_PROCESS);
+        load_current();
+    }
+    static void disch_scr_switch_handler(lv_event_t *e){
+        state = 2;
+        load_transition();
+        init_process_screen(DISCHARGE_PROCESS);
+        load_current();
+    }
+    static void cycle_scr_switch_handler(lv_event_t *e){
+        state = 2;
+        load_transition();
+        init_process_screen(CYCLE_PROCESS);
+        load_current();
+    }
+
+    static void process_back_handler(lv_event_t *e){
+        state = 1;
+        load_transition();
+        init_start_screen();
+        load_current();
+    }
+
 
     void init_transition_screen(){
         trans_scr = lv_obj_create(NULL);
+        lv_obj_add_style(trans_scr, &main_screen_style, LV_STATE_DEFAULT);
     }
     void init_demo_screen(){
         curr_scr = lv_obj_create(NULL);
@@ -126,8 +169,8 @@ namespace gui{
     void init_start_screen(){
         curr_scr = lv_obj_create(NULL);
         lv_obj_add_style(curr_scr, &main_screen_style, LV_STATE_DEFAULT );
-        static lv_coord_t col_dsc[] = {95, 95, 95, LV_GRID_TEMPLATE_LAST};
-        static lv_coord_t row_dsc[] = {70, 70, 30, 30, LV_GRID_TEMPLATE_LAST};
+        static lv_coord_t col_dsc[] = {90, 90, 90, LV_GRID_TEMPLATE_LAST};
+        static lv_coord_t row_dsc[] = {75, 75, 25, 25, LV_GRID_TEMPLATE_LAST};
         lv_obj_t *cont = lv_obj_create(curr_scr);
         init_grid(cont, col_dsc, row_dsc);
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
@@ -139,12 +182,47 @@ namespace gui{
             lv_obj_add_style(buttons[i], &main_buttons_styles[i], LV_STATE_DEFAULT);
             lv_obj_add_style(buttons[i], &main_buttons_pr_styles[i], LV_STATE_PRESSED);
             lv_obj_set_grid_cell(buttons[i], LV_GRID_ALIGN_STRETCH, (i%3), 1, LV_GRID_ALIGN_STRETCH, (i/3), 1);
-            
             label_buttons[i] = lv_label_create(buttons[i]);
             lv_label_set_text(label_buttons[i], label_btns_text[i].c_str());
             lv_obj_set_style_text_font(label_buttons[i], &lv_font_montserrat_12, LV_STATE_DEFAULT);
             lv_obj_center(label_buttons[i]);
         }
+        lv_obj_add_event_cb(buttons[0], charge_scr_switch_handler, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(buttons[1], store_scr_switch_handler, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(buttons[2], disch_scr_switch_handler, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(buttons[4], cycle_scr_switch_handler, LV_EVENT_CLICKED, NULL);
+    }
+
+    void init_process_screen(uint8_t process_type){
+        curr_scr = lv_obj_create(NULL);
+        lv_obj_add_style(curr_scr, &main_screen_style, LV_STATE_DEFAULT );
+        static lv_coord_t col_dsc[] = {70, 70, 70, 70,  LV_GRID_TEMPLATE_LAST};
+        static lv_coord_t row_dsc[] = {25, 25, 25, 25, 25, 25, 25, 25, LV_GRID_TEMPLATE_LAST};
+        lv_obj_t *cont = lv_obj_create(curr_scr);
+        init_grid(cont, col_dsc, row_dsc);
+        lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
+        std::vector<std::string> process = {"CHARGE", "STORE", "DISCHG", "CYCLE"};
+        lv_obj_t *back_btn = lv_btn_create(cont);
+        lv_obj_t *start_btn = lv_btn_create(cont);
+        lv_obj_t *process_cont = lv_obj_create(cont);
+        lv_obj_remove_style_all(process_cont);
+        init_button(back_btn, &main_buttons_styles[2], &main_buttons_pr_styles[2], 0, 7);
+        init_button(start_btn, &main_buttons_styles[0], &main_buttons_pr_styles[0], 3, 7);
+        init_cont(process_cont, &process_label_style, 2, 7);
+        lv_obj_add_event_cb(back_btn, process_back_handler, LV_EVENT_CLICKED, NULL);
+        
+        lv_obj_t *label_back_btn = lv_label_create(back_btn);
+        lv_obj_t *label_start_btn = lv_label_create(start_btn);
+        lv_obj_t *label_process = lv_label_create(process_cont);
+        
+        lv_obj_set_style_text_font(label_process, &lv_font_montserrat_14, LV_STATE_DEFAULT);
+
+        lv_label_set_text(label_back_btn, "BACK");
+        lv_label_set_text(label_start_btn, "START");
+        lv_label_set_text(label_process, process[process_type].c_str());
+        lv_obj_center(label_back_btn);
+        lv_obj_center(label_start_btn);
+        lv_obj_center(label_process);
     }
 
 
@@ -154,7 +232,6 @@ namespace gui{
         lv_obj_del(curr_scr);
     }
     void load_current(){
-        
         lv_scr_load(curr_scr);
     }
 };

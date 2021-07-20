@@ -19,4 +19,5 @@ class ina238{
         void write_adc_config2(uint8_t mode = 0xb, uint8_t vcvbust = 0x2, uint8_t vshct = 0x2, uint8_t vtct = 0x2, uint8_t avg = 0x0);
         void write_currlsbcalc_3(uint16_t currlsb = 0x0fff);
         float read_current();
+        float read_temperature();
 };

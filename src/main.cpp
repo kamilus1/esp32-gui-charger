@@ -1,20 +1,6 @@
-#include <Arduino.h>
-#include <stdio.h>
-#include <SPI.h>
-#include <Wire.h>
-
-#include <TFT_eSPI.h>
-
-#include <lvgl.h>
-
-#include "gui_screens.hpp"
+#include "main.hpp"
 
 
-#define BAUD_RATE 115200
-#define N 1
-#define CS 5
-
-#define TOUCH_THRESHOLD 600
 
 //pwm variables
 const int freq = 10000; //10 khz
@@ -94,7 +80,11 @@ void setup() {
    lv_indev_drv_register( &indev_drv );
 
    //Initialize styles
-   gui::init_demo_screen();
+  gui::init_styles();
+
+
+   //gui::init_demo_screen();
+   gui::init_start_screen();
    gui::load_current();
     //lv_example_win_1();
 

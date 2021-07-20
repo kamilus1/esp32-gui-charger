@@ -101,6 +101,17 @@ float ina238::read_current(){
     return ((float)curr) * curr_lsb;
 }
 
+float ina238::read_temperature(){
+    this->write_data[0] = this->registers["DIETEMP"];
+    uint8_t *data = this->read_command(this->write_data, 1, 2);
+    uint16_t temp_buffer = data[0];
+    temp_buffer <<= 4;
+    temp_buffer |= (data[1] >> 4);
+    float temp = 0.125;
+    temp *= temp_buffer;
+    return temp;
+}
+
 void ina238::begin(){
     if(this->device_found()){
         this->write_config1();

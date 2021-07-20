@@ -77,7 +77,7 @@ ADBMS1818::ADBMS1818(int8_t spi_pins[4], uint8_t n, uint32_t freq,  uint8_t br):
     this->init();
 }
 ADBMS1818::ADBMS1818(uint8_t cspin, uint8_t n, uint32_t freq,  uint8_t br): f(freq), cs(cspin), n(n), byte_reg(br){
-    spi = new SPIClass();
+    spi = new SPIClass(VSPI);
     spi->begin();
     this->init();
 }

@@ -21,6 +21,7 @@ namespace gui{
 
     void init_grid(lv_obj_t *cont, const lv_coord_t col[], const lv_coord_t rows[], lv_coord_t w, lv_coord_t h){
         lv_obj_set_grid_align(cont, LV_GRID_ALIGN_SPACE_BETWEEN, LV_GRID_ALIGN_END);
+        
         lv_obj_set_grid_dsc_array(cont, col, rows);
         lv_obj_set_size(cont, w, h);
         lv_obj_center(cont);

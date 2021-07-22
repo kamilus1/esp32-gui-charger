@@ -21,10 +21,12 @@ std::map<std::string, uint8_t> ina238::registers = {
 ina238::ina238(uint16_t addr, uint16_t r_shunt, uint8_t sda, uint8_t scl, uint32_t freq,  uint8_t i2c_bus): ina_addr(addr), r(r_shunt){
     i2c_wire = new TwoWire(i2c_bus);
     i2c_wire->begin(sda, scl, freq);
+
 }
 
 ina238::ina238(uint16_t addr,  TwoWire *two_wire, uint16_t r_shunt): ina_addr(addr), r(r_shunt){
     i2c_wire = two_wire;
+
 }
 
 bool ina238::device_found(){
@@ -110,6 +112,17 @@ float ina238::read_temperature(){
     float temp = 0.125;
     temp *= temp_buffer;
     return temp;
+}
+
+float ina238::read_voltage(){
+    this->write_data[0] = this->registers["VBUS"];
+    uint8_t *data = this->read_command(this->write_data, 1, 2);
+    uint16_t volt_buffer = data[0];
+    volt_buffer <<= 8;
+    volt_buffer |= data[1];
+    float voltage = 0.003125;
+    voltage *= volt_buffer;
+    return voltage;
 }
 
 void ina238::begin(){

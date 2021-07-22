@@ -1,4 +1,4 @@
-#include "lvgl.h"
+#include <lvgl.h>
 
 namespace gui{
     void init_button(lv_obj_t *button, lv_style_t *style, lv_style_t *style_pr, 

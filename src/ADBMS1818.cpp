@@ -90,7 +90,7 @@ void ADBMS1818::init(){
     this->pwm = new uint8_t [this->n*9];
     this->vuv = 0;
     this->vov = 0;
-    this->dcc = 0x0003ffff; //allow discharge
+    this->dcc = 0x00000000; //dont allow discharge
     this->dcto = 0;
     this->ps = 0;
     this->gpiox = 0x01ff;

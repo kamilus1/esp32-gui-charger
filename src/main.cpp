@@ -1,5 +1,10 @@
 #include "main.hpp"
 
+//uart variables and function prototypes
+static QueueHandle_t uart0_queue;
+static const char * TAG = "";      
+
+static void UART_ISR_ROUTINE(void *pvParameters);
 
 
 //pwm variables
@@ -30,7 +35,6 @@ static lv_color_t buf[ screenWidth * 10 ];
 
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);
 void my_touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t*data);
-static void event_handler(lv_event_t *e);
 uint16_t touchX, touchY;
 
 
@@ -38,7 +42,20 @@ uint16_t touchX, touchY;
 
 
 void setup() {
-  Serial.begin(BAUD_RATE);
+  //configuring UART interrupts 
+  uart_config_t uart_0_config = {
+    .baud_rate = BAUD_RATE, 
+    .data_bits = UART_DATA_8_BITS, 
+    .parity = UART_PARITY_DISABLE, 
+    .stop_bits = UART_STOP_BITS_1,
+    .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
+  };
+  uart_param_config(UART_NUM_0, &uart_0_config);
+  esp_log_level_set(TAG, ESP_LOG_INFO);
+  uart_set_pin(UART_NUM_0, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+  uart_driver_install(UART_NUM_0, BUF_SIZE, BUF_SIZE, 20, &uart0_queue, 0);
+  
+  xTaskCreate(UART_ISR_ROUTINE, "UART_ISR_ROUTINE", 2048, NULL, 12, NULL);
   //setup PWM
   ledcSetup(pwm_channel, freq, resolution);
   for(uint8_t i=0; i<3;i++){
@@ -79,9 +96,11 @@ void setup() {
    indev_drv.read_cb = my_touchpad_read;
    lv_indev_drv_register( &indev_drv );
 
-   //Initialize styles
-  gui::init_styles();
-  gui::init_transition_screen();
+    //initialize tasks
+    gui::init_adbms_task();
+     //Initialize styles
+    gui::init_styles();
+    gui::init_transition_screen();
 
 
    //gui::init_demo_screen();
@@ -130,11 +149,24 @@ void my_touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t*data){
    }
 }
 
-static void event_handler(lv_event_t *e){
-  lv_event_code_t code = lv_event_get_code(e);
+static void UART_ISR_ROUTINE(void *pvParameters){
+  uart_event_t event;
+  size_t buffered_size;
+  bool exit_condition = false;
+  while(!exit_condition){
+    if(xQueueReceive(uart0_queue, (void *)&event, (portTickType)portMAX_DELAY)){
+      if(event.type == UART_DATA){
 
-    if(code == LV_EVENT_CLICKED) {
-      Serial.println("essa");
+        uint8_t UART0_data[128];
+        int UART0_data_length = 0;
+        ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&UART0_data_length));
+        UART0_data_length = uart_read_bytes(UART_NUM_0, UART0_data, UART0_data_length, 100);
+        char data[12];
+        sprintf(data, "%d\r\n", UART0_data_length);
+        uart_write_bytes(UART_NUM_0, data, strlen(data));
+      }
     }
+  }
+  vTaskDelete(NULL);
 }
 

@@ -23,6 +23,7 @@ public:
     void start_all_conversions();
     bool cell_detect();
     uint32_t get_tot_cell_qnt();
+    float get_sum_cell_voltage();
     uint8_t * get_cell_qnt();
     uint8_t get_status();
 };

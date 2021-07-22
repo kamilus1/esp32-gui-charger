@@ -7,6 +7,7 @@ class ina238{
     uint16_t curr_lsb_calc;
     uint8_t write_data [4];
     uint16_t r;
+
     static std::map<std::string, uint8_t> registers;
     public:
         ina238(uint16_t addr, uint16_t r_shunt = 100, uint8_t sda=21, uint8_t scl=22, uint32_t freq=400000,  uint8_t i2c_bus = 0);
@@ -20,4 +21,5 @@ class ina238{
         void write_currlsbcalc_3(uint16_t currlsb = 0x0fff);
         float read_current();
         float read_temperature();
+        float read_voltage();
 };

@@ -1,4 +1,5 @@
-#define BAUD_RATE 115200
+
+
 #define N 1
 #define CS 5
 
@@ -10,3 +11,8 @@
 #define STORE_PROCESS 1
 #define DISCHARGE_PROCESS 2
 #define CYCLE_PROCESS 3
+
+
+#define ADBMS_READ_PERIOD 500 //500 ms 
+#define MAX_CURRENT 25 //In amperes
+

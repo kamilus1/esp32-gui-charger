@@ -74,3 +74,27 @@ uint8_t* ADBMS1818Class::get_cell_qnt(){
 uint8_t ADBMS1818Class::get_status(){
     return this->adbms_status;
 }
+
+float ADBMS1818Class::get_sum_cell_voltage(){
+    this->start_cv_sc_conversion();
+    if(this->pladc_rdy()){
+        uint16_t **cell_voltage;
+        cell_voltage = new uint16_t* [this->n];
+        for(uint8_t i=0; i<this->n;i++){
+            cell_voltage[i] = new uint16_t [18];
+            for(uint8_t j=0;j<18;j++){
+                cell_voltage[i][j] = 0;
+            }
+        }
+        cell_voltage = this->read_cv_adc();
+        float voltage_sum = 0;
+        for(uint8_t i=0; i<this->n; i++){
+            for(uint8_t j=0; j<this->cell_qnt[i]; j++){
+                voltage_sum += this->convert_voltage(cell_voltage[i][j]);
+            }
+        }
+        return voltage_sum;
+    }else{
+        return 0;
+    }
+}

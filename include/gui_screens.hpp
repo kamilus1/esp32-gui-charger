@@ -13,6 +13,7 @@ namespace gui{
     static int temperature;
     static float input_voltage;
     static int max_power; //whats the formula of max power? Is it DC input voltage * max_current or is it fixed? 
+    static uint8_t process_type_selected;
 
     //styles
     static lv_color_t main_buttons_colors[6] 
@@ -31,6 +32,8 @@ namespace gui{
     static lv_style_t info_cont_style;
     static lv_style_t basic_label_style;
     static lv_style_t error_label_style;
+    static lv_style_t msg_box_style;
+    static lv_style_t msg_box_btn_style;
 
     
     void init_styles();
@@ -39,6 +42,8 @@ namespace gui{
     void init_main_btn_pr_style();
     void init_prc_lbl_style();
     void init_info_cnt_style();
+    void init_msg_box_style();
+    void init_msg_box_btn_style();
     void init_basic_label_style();
     void init_error_label_style();
 
@@ -52,6 +57,12 @@ namespace gui{
     static void disch_scr_switch_handler(lv_event_t *e);
     static void cycle_scr_switch_handler(lv_event_t *e);
     static void process_back_handler(lv_event_t *e);
+    static void process_start_switch_handler(lv_event_t *e);
+    static void process_stop_handler(lv_event_t *e);
+    static void process_stop_msgbox_handler(lv_event_t *e);
+    static void data_start_switch_handler(lv_event_t *e);
+    static void data_process_switch_handler(lv_event_t *e);
+    static void data_back_handler(lv_event_t *e);
 
     //screens
     static lv_obj_t *curr_scr;
@@ -64,9 +75,9 @@ namespace gui{
     void init_start_screen();
     void init_process_screen(uint8_t process_type = CHARGE_PROCESS);
     void init_start_process_screen(uint8_t process_type = CHARGE_PROCESS);
-    void init_data_list_screen();
-    void init_data_candles_screen();
-    void init_data_process_graph();
+    void init_data_list_screen(uint8_t n = 0);
+    void init_data_candles_screen(uint8_t n = 0);
+    void init_data_process_graph(uint8_t n = 0);
     void init_transition_screen();
     void load_transition();
     void load_current();
@@ -75,5 +86,6 @@ namespace gui{
     static lv_timer_t *adbms_read;
 
     void adbms_start_scr_read(lv_timer_t *timer);
+    void adbms_data_scr_read(lv_timer_t *timer);
     void init_adbms_task();
 };

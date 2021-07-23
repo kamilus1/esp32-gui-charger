@@ -10,6 +10,7 @@ namespace gui{
         temperature = 0;
         input_voltage = 0;
         max_power = 0;
+        process_type_selected = 0;
         init_main_scr_style();
         init_main_btn_style();
         init_main_btn_pr_style();
@@ -17,6 +18,8 @@ namespace gui{
         init_info_cnt_style();
         init_basic_label_style();
         init_error_label_style();
+        init_msg_box_style();
+        init_msg_box_btn_style();
     }
     void init_main_scr_style(){
         lv_style_init(&main_screen_style);
@@ -106,6 +109,25 @@ namespace gui{
         lv_style_set_text_color(&error_label_style, lv_palette_main(LV_PALETTE_RED));
         lv_style_set_border_width(&error_label_style, 0);
     }
+    void init_msg_box_style(){
+        lv_style_init(&msg_box_style);
+        lv_style_set_bg_color(&msg_box_style, LV_COLOR_MAKE(50, 50, 50));
+        lv_style_set_border_color(&msg_box_style, LV_COLOR_MAKE(0xff, 0xff, 0xff));
+        lv_style_set_text_color(&msg_box_style, LV_COLOR_MAKE(224, 224, 224));
+        lv_style_set_radius(&msg_box_style, 0);
+        lv_style_set_border_width(&msg_box_style, 3);
+    }
+
+    void init_msg_box_btn_style(){
+        lv_style_init(&msg_box_btn_style);
+        lv_style_set_bg_color(&msg_box_btn_style, LV_COLOR_MAKE(20, 20, 20));
+        lv_style_set_border_color(&msg_box_btn_style, LV_COLOR_MAKE(0xff, 0xff, 0xff));
+        lv_style_set_radius(&msg_box_btn_style, 0);
+        lv_style_set_text_color(&msg_box_style, LV_COLOR_MAKE(224, 224, 224));
+        lv_style_set_border_opa(&msg_box_btn_style, LV_OPA_50);
+        lv_style_set_border_width(&msg_box_btn_style, 1);
+        
+    }
 
 
     static void conversion_handler(lv_event_t *e){
@@ -168,6 +190,38 @@ namespace gui{
             load_transition();
             init_start_screen();
             load_current();
+        }
+    }
+
+    static void process_start_switch_handler(lv_event_t *e){
+        state = 3;
+        uint8_t *process_type = (uint8_t *) lv_event_get_user_data(e);
+        load_transition();
+        init_start_process_screen(*process_type);
+        load_current();
+    }
+
+    static void process_stop_handler(lv_event_t *e){
+        static const char * btns[] = {"YES", "NO", ""};
+        lv_obj_t *stop_mbox = lv_msgbox_create(lv_scr_act(), "STOP", "Stop process?", btns, true);
+        lv_obj_add_event_cb(stop_mbox, process_stop_msgbox_handler, LV_EVENT_VALUE_CHANGED, NULL);
+        lv_obj_add_style(stop_mbox, &msg_box_style, LV_STATE_DEFAULT);
+        lv_obj_add_style(lv_msgbox_get_close_btn(stop_mbox), &main_buttons_styles[2], LV_STATE_DEFAULT);
+        lv_obj_add_style(lv_msgbox_get_close_btn(stop_mbox), &main_buttons_pr_styles[2], LV_STATE_PRESSED);
+        lv_obj_add_style(lv_msgbox_get_btns(stop_mbox), &msg_box_btn_style, LV_STATE_DEFAULT);
+        lv_obj_center(stop_mbox);
+    }
+
+    static void process_stop_msgbox_handler(lv_event_t *e){
+        lv_obj_t *obj = lv_event_get_current_target(e);
+        if(!strcmp("YES", lv_msgbox_get_active_btn_text(obj))){
+            lv_msgbox_close(obj);
+            state = 1;
+            load_transition();
+            init_start_screen();
+            load_current();
+        }else{
+            lv_msgbox_close(obj);
         }
     }
 
@@ -269,6 +323,9 @@ namespace gui{
     }
 
     void init_process_screen(uint8_t process_type){
+        std::vector<std::string> process = {"CHARGE", "STORE", "DISCHG", "CYCLE"};
+        std::vector<std::string> process_info = {"CURRENT", "CUT TEMP", "MAX.CAPACITY", "SAFETY TIMER", "BALANCE dVmin"};
+        process_type_selected = process_type;
         curr_scr = lv_obj_create(NULL);
         lv_obj_add_style(curr_scr, &main_screen_style, LV_STATE_DEFAULT );
         static lv_coord_t col_dsc[] = {70, 70, 70, 70,  LV_GRID_TEMPLATE_LAST};
@@ -276,19 +333,22 @@ namespace gui{
         lv_obj_t *cont = lv_obj_create(curr_scr);
         init_grid(cont, col_dsc, row_dsc);
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
-        std::vector<std::string> process = {"CHARGE", "STORE", "DISCHG", "CYCLE"};
-        std::vector<std::string> process_info = {"CURRENT", "CUT TEMP", "MAX.CAPACITY", "SAFETY TIMER", "BALANCE dVmin"};
+        
         lv_obj_t *back_btn = lv_btn_create(cont);
         lv_obj_t *start_btn = lv_btn_create(cont);
+        init_button(back_btn, &main_buttons_styles[2], &main_buttons_pr_styles[2], 0, 6);
+        init_button(start_btn, &main_buttons_styles[0], &main_buttons_pr_styles[0], 3, 6);
+        lv_obj_add_event_cb(back_btn, process_back_handler, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(start_btn, process_start_switch_handler, LV_EVENT_CLICKED, &process_type_selected);
+
         lv_obj_t *process_cont = lv_obj_create(cont);
         lv_obj_t *info_cont = lv_obj_create(cont);
         lv_obj_remove_style_all(process_cont);
         lv_obj_remove_style_all(info_cont);
-        init_button(back_btn, &main_buttons_styles[2], &main_buttons_pr_styles[2], 0, 6);
-        init_button(start_btn, &main_buttons_styles[0], &main_buttons_pr_styles[0], 3, 6);
+        
         init_cont(process_cont, &process_label_style, 2, 6);
         init_cont(info_cont, &info_cont_style, 0, 0, 4);
-        lv_obj_add_event_cb(back_btn, process_back_handler, LV_EVENT_CLICKED, NULL);
+        
         
         lv_obj_t *label_back_btn = lv_label_create(back_btn);
         lv_obj_t *label_start_btn = lv_label_create(start_btn);
@@ -303,7 +363,45 @@ namespace gui{
         lv_obj_center(label_start_btn);
         lv_obj_center(label_process);
     }
+    void init_start_process_screen(uint8_t process_type){
+        std::vector<std::string> process = {"CHARGING IN PROGRESS", "STORING IN PROGRESS", 
+        "DISCHARGING IN PROGRESS", "CYCLING IN PROGRESS"};
 
+        curr_scr = lv_obj_create(NULL);
+        lv_obj_add_style(curr_scr, &main_screen_style, LV_STATE_DEFAULT );
+        static lv_coord_t col_dsc[] = {60, 60, 60, 60, 60, LV_GRID_TEMPLATE_LAST};
+        static lv_coord_t row_dsc[] = {25, 30, 30, 30, 30, 30,   LV_GRID_TEMPLATE_LAST};
+        lv_obj_t *cont = lv_obj_create(curr_scr);
+        init_grid(cont, col_dsc, row_dsc);
+        lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
+        
+
+        lv_obj_t *stop_btn = lv_btn_create(cont);
+        lv_obj_t *data_btn = lv_btn_create(cont);
+        init_button(stop_btn, &main_buttons_styles[2], &main_buttons_pr_styles[2], 0, 5);
+        init_button(data_btn, &main_buttons_styles[0], &main_buttons_pr_styles[0], 4, 5);
+        lv_obj_add_event_cb(stop_btn, process_stop_handler, LV_EVENT_CLICKED, NULL);
+        
+        lv_obj_t *info_cont = lv_obj_create(cont);
+        lv_obj_t *process_cont = lv_obj_create(cont);
+        lv_obj_remove_style_all(info_cont);
+        lv_obj_remove_style_all(process_cont);
+        init_cont(info_cont, &info_cont_style, 0, 0, 5);
+        init_cont(process_cont, &process_label_style, 0, 1, 5);
+
+        lv_obj_t *label_process = lv_label_create(process_cont);
+        lv_obj_t *label_stop = lv_label_create(stop_btn);
+        lv_obj_t *label_data = lv_label_create(data_btn);
+        lv_obj_set_style_text_font(label_process, &lv_font_montserrat_20, LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(label_stop, &lv_font_montserrat_14, LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(label_data, &lv_font_montserrat_14, LV_STATE_DEFAULT);
+        lv_label_set_text(label_process, process[process_type].c_str());
+        lv_label_set_text(label_stop, "STOP");
+        lv_label_set_text(label_data, "DATA");
+        lv_obj_center(label_process);
+        lv_obj_center(label_stop);
+        lv_obj_center(label_data);
+    }
 
 
     void load_transition(){
@@ -315,20 +413,22 @@ namespace gui{
     }
 
     void adbms_start_scr_read(lv_timer_t *timer){
-        adbms.cell_detect();
-        tot_cell_qnt = adbms.get_tot_cell_qnt();
-        sum_cell_volt = adbms.get_sum_cell_voltage();
-        if(ina.device_found()){
-            input_voltage = ina.read_voltage();
-            temperature = (int)ina.read_temperature();
-        }else{
-            temperature = 0;
-            input_voltage = 0;
+        if(state == 1){
+            adbms.cell_detect();
+            tot_cell_qnt = adbms.get_tot_cell_qnt();
+            sum_cell_volt = adbms.get_sum_cell_voltage();
+            if(ina.device_found()){
+                input_voltage = ina.read_voltage();
+                temperature = (int)ina.read_temperature();
+            }else{
+                temperature = 0;
+                input_voltage = 0;
+            }
+            max_power = input_voltage * MAX_CURRENT;
+            lv_label_set_text_fmt(label_cell_qnt, "%u-s Li-Ion Battery Detected", tot_cell_qnt);
+            lv_label_set_text_fmt(label_cell_volt_temp, "%d°C   %.1f V", temperature, sum_cell_volt);
+            lv_label_set_text_fmt(label_input_electricity, "DC Input: %.1f\nMax Power: %d", input_voltage, max_power);
         }
-        max_power = input_voltage * MAX_CURRENT;
-        lv_label_set_text_fmt(label_cell_qnt, "%u-s Li-Ion Battery Detected", tot_cell_qnt);
-        lv_label_set_text_fmt(label_cell_volt_temp, "%d°C   %.1f V", temperature, sum_cell_volt);
-        lv_label_set_text_fmt(label_input_electricity, "DC Input: %.1f\nMax Power: %d", input_voltage, max_power);
     }
 
     void init_adbms_task(){

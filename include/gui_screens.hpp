@@ -14,6 +14,8 @@ namespace gui{
     static float input_voltage;
     static int max_power; //whats the formula of max power? Is it DC input voltage * max_current or is it fixed? 
     static uint8_t process_type_selected;
+    static uint8_t data_type_selected;
+    static uint8_t current_adbms;
 
     //styles
     static lv_color_t main_buttons_colors[6] 
@@ -60,6 +62,8 @@ namespace gui{
     static void process_start_switch_handler(lv_event_t *e);
     static void process_stop_handler(lv_event_t *e);
     static void process_stop_msgbox_handler(lv_event_t *e);
+    static void data_next_adbms_handler(lv_event_t *e);
+    static void data_prev_adbms_handler(lv_event_t *e);
     static void data_start_switch_handler(lv_event_t *e);
     static void data_process_switch_handler(lv_event_t *e);
     static void data_back_handler(lv_event_t *e);
@@ -71,21 +75,30 @@ namespace gui{
     static lv_obj_t *label_cell_qnt;
     static lv_obj_t *label_cell_volt_temp;
     static lv_obj_t *label_input_electricity;
+    static lv_obj_t *label_cells_voltage[18];
+    static lv_obj_t *label_special_symbol;
     void init_demo_screen();
     void init_start_screen();
     void init_process_screen(uint8_t process_type = CHARGE_PROCESS);
     void init_start_process_screen(uint8_t process_type = CHARGE_PROCESS);
-    void init_data_list_screen(uint8_t n = 0);
-    void init_data_candles_screen(uint8_t n = 0);
-    void init_data_process_graph(uint8_t n = 0);
+    void init_data_list_screen();
+    void init_data_candles_screen();
+    void init_data_process_graph();
     void init_transition_screen();
     void load_transition();
     void load_current();
 
     //tasks
     static lv_timer_t *adbms_read;
+    static lv_timer_t *process_task;
 
     void adbms_start_scr_read(lv_timer_t *timer);
     void adbms_data_scr_read(lv_timer_t *timer);
+
+    void process_charge(lv_timer_t *timer);
+    void process_store(lv_timer_t *timer);
+    void process_discharge(lv_timer_t *timer);
+    void process_cycle(lv_timer_t *timer);
+    
     void init_adbms_task();
 };

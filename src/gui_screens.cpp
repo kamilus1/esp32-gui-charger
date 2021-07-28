@@ -11,6 +11,8 @@ namespace gui{
         input_voltage = 0;
         max_power = 0;
         process_type_selected = 0;
+        data_type_selected = 0;
+        current_adbms = 0;
         init_main_scr_style();
         init_main_btn_style();
         init_main_btn_pr_style();
@@ -83,32 +85,33 @@ namespace gui{
         lv_style_set_border_color(&process_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
         lv_style_set_bg_grad_color(&process_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
     }
-    void init_info_cnt_style(){
+    void init_info_cnt_style(){             
         lv_style_init(&info_cont_style);
         lv_style_set_radius(&info_cont_style, 0);
-        lv_style_set_bg_color(&info_cont_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
-        lv_style_set_bg_grad_color(&info_cont_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
-        lv_style_set_border_color(&info_cont_style, LV_COLOR_MAKE(224, 224, 224));
-        lv_style_set_border_side(&info_cont_style, LV_BORDER_SIDE_BOTTOM);
-        lv_style_set_border_width(&info_cont_style, 1);
-        lv_style_set_text_color(&info_cont_style, LV_COLOR_MAKE(224, 224, 224));
+       
+        /*Make a gradient*/
+        lv_style_set_bg_opa(&info_cont_style, LV_OPA_COVER);
+        lv_style_set_bg_color(&info_cont_style, LV_COLOR_MAKE(0,0,0));
+        lv_style_set_bg_grad_color(&info_cont_style, lv_color_darken(main_buttons_colors[0],100));
+        lv_style_set_bg_grad_dir(&info_cont_style, LV_GRAD_DIR_VER);
+
+        /*Shift the gradient to the bottom*/
+        lv_style_set_bg_main_stop(&info_cont_style, 150);
+
+        lv_style_set_text_color(&info_cont_style, LV_COLOR_MAKE(255, 255, 255));
     }
 
     void init_basic_label_style(){
         lv_style_init(&basic_label_style);
-        lv_style_set_bg_color(&basic_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
-        lv_style_set_bg_grad_color(&basic_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
-        lv_style_set_text_color(&basic_label_style, LV_COLOR_MAKE(224, 224, 224));
-        lv_style_set_border_width(&basic_label_style, 0);
+        lv_style_set_bg_opa(&error_label_style, LV_OPA_COVER);           
+        lv_style_set_bg_grad_dir(&error_label_style, LV_GRAD_DIR_VER);
+        lv_style_set_text_color(&basic_label_style, LV_COLOR_MAKE(255, 255, 255));
     }
 
     void init_error_label_style(){
         lv_style_init(&error_label_style);
-        lv_style_set_bg_color(&error_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
-        lv_style_set_bg_grad_color(&error_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
-        lv_style_set_text_color(&error_label_style, lv_palette_main(LV_PALETTE_RED));
-        lv_style_set_border_width(&error_label_style, 0);
-    }
+        lv_style_set_text_color(&error_label_style, LV_COLOR_MAKE(255, 255, 255));
+    }   
     void init_msg_box_style(){
         lv_style_init(&msg_box_style);
         lv_style_set_bg_color(&msg_box_style, LV_COLOR_MAKE(50, 50, 50));
@@ -185,12 +188,11 @@ namespace gui{
     }
 
     static void process_back_handler(lv_event_t *e){
-        if(tot_cell_qnt > 0){
-            state = 1;
-            load_transition();
-            init_start_screen();
-            load_current();
-        }
+        state = 1;
+        load_transition();
+        init_start_screen();
+        load_current();
+    
     }
 
     static void process_start_switch_handler(lv_event_t *e){
@@ -223,6 +225,24 @@ namespace gui{
         }else{
             lv_msgbox_close(obj);
         }
+    }
+
+    static void data_next_adbms_handler(lv_event_t *e){
+        if((current_adbms + 1) >= ADBMS_AMOUNT){
+            current_adbms = 0;
+        }else{
+            current_adbms += 1;
+        }
+        
+    }
+
+    static void data_prev_adbms_handler(lv_event_t *e){
+        if(current_adbms <= 0){
+            current_adbms = (ADBMS_AMOUNT - 1);
+        }else{
+            current_adbms -= 1;
+        }
+        
     }
 
 
@@ -271,50 +291,64 @@ namespace gui{
         lv_obj_center(label_conv);
     }
     void init_start_screen(){
+        std::vector<std::string> label_btns_text = {"CHARGE", "STORE", "DISCHARGE", "DATA", "CYCLE", "SETTINGS"};
         curr_scr = lv_obj_create(NULL);
         lv_obj_add_style(curr_scr, &main_screen_style, LV_STATE_DEFAULT );
-        //grid
+        
+        //start screen grid 
         static lv_coord_t col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST}; 
-        static lv_coord_t row_dsc[] = {80, 80, LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST}; 
+        static lv_coord_t row_dsc[] = {30, 80, 80, LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST}; 
         lv_obj_t *cont = lv_obj_create(curr_scr);
         init_grid(cont, col_dsc, row_dsc);
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
-        //container with info about amount of liion batteries connected
+        
+        //container with number of Battery Pack cells detected
         lv_obj_t *info_qnt_cont = lv_obj_create(cont);
         lv_obj_remove_style_all(info_qnt_cont);
-        init_cont(info_qnt_cont, &info_cont_style, 0, 2, 3);
+        init_cont(info_qnt_cont, &info_cont_style, 0, 3, 3);    //BOTTOM center
         label_cell_qnt = lv_label_create(info_qnt_cont);
-        lv_label_set_text_fmt(label_cell_qnt, "%u-s Li-Ion Battery Detected", tot_cell_qnt);
-        lv_obj_set_style_text_font(label_cell_qnt, &lv_font_montserrat_22, LV_STATE_DEFAULT);
-        lv_obj_align(label_cell_qnt, LV_ALIGN_LEFT_MID, 5, 0);
+        lv_label_set_text_fmt(label_cell_qnt, "%u-s Battery Pack Detected", tot_cell_qnt);
+        lv_obj_set_style_text_font(label_cell_qnt, &lv_font_montserrat_20, LV_STATE_DEFAULT);
+        lv_obj_align(label_cell_qnt, LV_ALIGN_CENTER, 0, 0);
+        
+        //container with special_symbol
+        lv_obj_t *wifi_symbol = lv_obj_create(cont);
+        lv_obj_remove_style_all(wifi_symbol);
+        init_cont(wifi_symbol, &basic_label_style, 1, 0, 1);    //TOP center
+        label_special_symbol = lv_label_create(wifi_symbol);
+        lv_label_set_text(label_special_symbol, LV_SYMBOL_WIFI);
+        lv_obj_align(label_special_symbol, LV_ALIGN_CENTER, 0, 0);
+
         //container with info about temp and voltage.
         lv_obj_t *info_temp_volt_cont = lv_obj_create(cont);
         lv_obj_remove_style_all(info_temp_volt_cont);
-        init_cont(info_temp_volt_cont, &basic_label_style, 1, 3, 2);
+        init_cont(info_temp_volt_cont, &basic_label_style, 2, 0, 1);    //TOP right
         label_cell_volt_temp = lv_label_create(info_temp_volt_cont);
-        lv_obj_set_style_text_font(label_cell_volt_temp, &lv_font_montserrat_22, LV_STATE_DEFAULT);
-        lv_label_set_text_fmt(label_cell_volt_temp, "%d°C   %.1f V", temperature, sum_cell_volt);
-        lv_obj_align(label_cell_volt_temp, LV_ALIGN_RIGHT_MID, -5, 0);
+        lv_obj_set_style_text_font(label_cell_volt_temp, &lv_font_montserrat_14, LV_STATE_DEFAULT);
+        lv_label_set_text_fmt(label_cell_volt_temp,"vBAT:  %.2f v\ntBAT:         %d°c", sum_cell_volt, temperature); // to define Battery's Temp, taken from LM35, applied on 1818's GPIO
+        lv_obj_align(label_cell_volt_temp, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+        
         //container with info about input electricity
         lv_obj_t *info_input_cont = lv_obj_create(cont);
         lv_obj_remove_style_all(info_input_cont);
-        init_cont(info_input_cont, &error_label_style, 0, 3);
+        init_cont(info_input_cont, &error_label_style, 0, 0, 1);    //TOP left
         label_input_electricity = lv_label_create(info_input_cont);
-        lv_obj_set_style_text_font(label_input_electricity, &lv_font_montserrat_12, LV_STATE_DEFAULT);
-        lv_label_set_text_fmt(label_input_electricity, "DC Input: %.1f\nMax Power: %d", input_voltage, max_power);
+        lv_obj_set_style_text_font(label_input_electricity, &lv_font_montserrat_14, LV_STATE_DEFAULT);
+        lv_label_set_text_fmt(label_input_electricity, "INPUT:  %.1f v\ntCHG:     %d°c", input_voltage, temperature); // internal temp in charger, taken from INA
+        lv_obj_align(label_input_electricity, LV_ALIGN_BOTTOM_LEFT, 0, 0);
 
         lv_obj_t *buttons[6];
         lv_obj_t *label_buttons[6];
-        std::vector<std::string> label_btns_text = {"CHARGE", "STORE", "DISCHARGE", "DATA", "CYCLE", "SETTINGS"};
+        
         for(uint8_t i=0; i<6; i++){
             buttons[i] = lv_btn_create(cont);
             lv_obj_add_style(buttons[i], &main_buttons_styles[i], LV_STATE_DEFAULT);
             lv_obj_add_style(buttons[i], &main_buttons_pr_styles[i], LV_STATE_PRESSED);
-            lv_obj_set_grid_cell(buttons[i], LV_GRID_ALIGN_STRETCH, (i%3), 1, LV_GRID_ALIGN_STRETCH, (i/3), 1);
+            lv_obj_set_grid_cell(buttons[i], LV_GRID_ALIGN_STRETCH, (i%3), 1, LV_GRID_ALIGN_STRETCH, ((i+3)/3), 1);
             label_buttons[i] = lv_label_create(buttons[i]);
             lv_label_set_text(label_buttons[i], label_btns_text[i].c_str());
             lv_obj_set_style_text_font(label_buttons[i], &lv_font_montserrat_12, LV_STATE_DEFAULT);
-            lv_obj_center(label_buttons[i]);
+            lv_obj_align(label_buttons[i], LV_ALIGN_BOTTOM_LEFT, -8, 10); 
         }
         lv_obj_add_event_cb(buttons[0], charge_scr_switch_handler, LV_EVENT_CLICKED, NULL);
         lv_obj_add_event_cb(buttons[1], store_scr_switch_handler, LV_EVENT_CLICKED, NULL);
@@ -403,6 +437,19 @@ namespace gui{
         lv_obj_center(label_data);
     }
 
+    void init_data_list_screen(uint8_t n){
+        curr_scr = lv_obj_create(NULL);
+        lv_obj_add_style(curr_scr, &main_screen_style, LV_STATE_DEFAULT );
+        static lv_coord_t col_dsc[] = {60, 60, 60, 60, 60, LV_GRID_TEMPLATE_LAST};
+        static lv_coord_t row_dsc[] = {25, 15, 15, 15, 15, 15, 15, 15, 15, 15, 30,   LV_GRID_TEMPLATE_LAST};
+        lv_obj_t *cont = lv_obj_create(curr_scr);
+        init_grid(cont, col_dsc, row_dsc);
+        lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
+        lv_obj_t *back_btn = lv_btn_create(cont);
+        lv_obj_t *prev_btn = lv_btn_create(cont);
+        lv_obj_t *next_btn = lv_btn_create(cont);
+    }
+
 
     void load_transition(){
         lv_scr_load(trans_scr);
@@ -413,7 +460,7 @@ namespace gui{
     }
 
     void adbms_start_scr_read(lv_timer_t *timer){
-        if(state == 1){
+        
             adbms.cell_detect();
             tot_cell_qnt = adbms.get_tot_cell_qnt();
             sum_cell_volt = adbms.get_sum_cell_voltage();
@@ -425,10 +472,15 @@ namespace gui{
                 input_voltage = 0;
             }
             max_power = input_voltage * MAX_CURRENT;
-            lv_label_set_text_fmt(label_cell_qnt, "%u-s Li-Ion Battery Detected", tot_cell_qnt);
-            lv_label_set_text_fmt(label_cell_volt_temp, "%d°C   %.1f V", temperature, sum_cell_volt);
-            lv_label_set_text_fmt(label_input_electricity, "DC Input: %.1f\nMax Power: %d", input_voltage, max_power);
-        }
+            lv_label_set_text_fmt(label_cell_qnt, "%u-s Battery Pack Detected", tot_cell_qnt);
+            lv_label_set_text_fmt(label_cell_volt_temp,"vBAT:  %.2f v\ntBAT:         %d°c", sum_cell_volt, temperature); // to define Battery's Temp, taken from LM35, applied on 1818's GPIO
+            lv_label_set_text_fmt(label_input_electricity, "INPUT:  %.1f v\ntCHG:     %d°c", input_voltage, temperature); // internal temp in charger, taken from INA
+    }
+
+    void adbms_data_scr_read(lv_timer_t *timer){
+        adbms.cell_detect();
+        uint8_t *cells_qnt = adbms.get_cell_qnt();
+        uint8_t k = cells_qnt[current_adbms];
     }
 
     void init_adbms_task(){

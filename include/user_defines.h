@@ -1,6 +1,6 @@
 
 
-#define N 1
+#define ADBMS_AMOUNT 1
 #define CS 5
 
 #define TOUCH_THRESHOLD 600
@@ -12,6 +12,7 @@
 #define DISCHARGE_PROCESS 2
 #define CYCLE_PROCESS 3
 
+#define INA238_ADDR 0x40
 
 #define ADBMS_READ_PERIOD 500 //500 ms 
 #define MAX_CURRENT 25 //In amperes

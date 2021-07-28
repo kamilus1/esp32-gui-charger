@@ -25,7 +25,7 @@ ADBMS1818Class adbms = ADBMS1818Class(adbms_pins); //constructor with modified p
 //ina238 driver
 //address depends on signals attached to A0 and A1 pins of ina238. 
 //https://www.ti.com/lit/ds/symlink/ina238-q1.pdf?ts=1623446444912#page=15
-ina238 ina((uint16_t)0x40);
+ina238 ina((uint16_t)INA238_ADDR);
 //lvgt gui vars
 static const uint32_t screenWidth  = 320;
 static const uint32_t screenHeight = 240;

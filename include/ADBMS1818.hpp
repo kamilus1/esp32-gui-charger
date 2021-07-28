@@ -57,7 +57,7 @@ class ADBMS1818{
         unsigned long pladc_timeout;
         uint8_t dcto, ps;
         uint16_t vuv, vov, gpiox;
-        uint32_t dcc;
+        uint32_t *dcc;
         void pec_15(uint8_t *tab, uint8_t len);
         void poll_command(uint8_t command[2]);
         void write_command(uint8_t command[2], uint8_t*data);
@@ -82,8 +82,7 @@ class ADBMS1818{
         void wake_up_idle();
         void set_config_reg_a();
         void set_config_reg_b();
-        void enable_dcc();
-        void disable_dcc();
+        void set_dcc(uint8_t n=0, uint32_t val = 0);
         void set_bits(std::string bit_key, uint8_t bit_value);
         void start_cv_adc_conversion(); //for default mode with 7khz  freq it takes about 2.3 ms for all cells conversion. 
         void start_open_wire_conversion();

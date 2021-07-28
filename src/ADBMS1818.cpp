@@ -90,7 +90,10 @@ void ADBMS1818::init(){
     this->pwm = new uint8_t [this->n*9];
     this->vuv = 0;
     this->vov = 0;
-    this->dcc = 0x00000000; //dont allow discharge
+    this->dcc = new uint32_t [this->n]; //dont allow discharge
+    for(uint8_t i=0; i<this->n; i++){
+        this->dcc[i]  = 0;
+    }
     this->dcto = 0;
     this->ps = 0;
     this->gpiox = 0x01ff;
@@ -213,8 +216,8 @@ void ADBMS1818::set_config_reg_a(){
         this->write_buff[(i+2)] = (uint8_t) (this->vuv >> 8);
         this->write_buff[(i+2)] |= (uint8_t) ( (this->vov & 0x000f) << 4);
         this->write_buff[(i+3)] = (uint8_t) (this->vov >> 4);
-        this->write_buff[(i+4)] = (uint8_t)(this->dcc & 0x00ff);
-        this->write_buff[(i+5)] = (uint8_t)((this->dcc >> 8) & 0x0f);
+        this->write_buff[(i+4)] = (uint8_t)(this->dcc[(i/this->byte_reg)] & 0x00ff);
+        this->write_buff[(i+5)] = (uint8_t)((this->dcc[(i/this->byte_reg)] >> 8) & 0x0f);
         this->write_buff[(i+5)] |= (uint8_t)(this->dcto << 4);
     }
     digitalWrite(this->cs, LOW);
@@ -232,8 +235,8 @@ void ADBMS1818::set_config_reg_b(){
         this->write_buff[i] = 0x00;
     }
     for(int i=0;i<this->byte_reg*this->n;i+=this->byte_reg){
-        this->write_buff[i] = (uint8_t) ((this->dcc >> 8) & 0xf0);
-        this->write_buff[(i+1)] = (uint8_t) ((this->dcc >> 15));
+        this->write_buff[i] = (uint8_t) ((this->dcc[i/this->byte_reg] >> 8) & 0xf0);
+        this->write_buff[(i+1)] = (uint8_t) ((this->dcc[i/this->byte_reg] >> 15));
     }
     uint8_t command[2];
     command[0] = (uint8_t) this->commands["WRCFGB"] & 0x00FF;
@@ -636,10 +639,6 @@ void ADBMS1818::write_sct_reg(){
     this->write_command(command, this->write_buff);
 }
 
-void ADBMS1818::enable_dcc(){
-    this->dcc = 0x0003ffff;
-}
-
-void ADBMS1818::disable_dcc(){
-    this->dcc = 0x00000000;
+void ADBMS1818::set_dcc(uint8_t n, uint32_t val){
+    this->dcc[n] = val;
 }

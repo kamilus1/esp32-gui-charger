@@ -245,6 +245,26 @@ namespace gui{
         
     }
 
+    static void data_start_switch_handler(lv_event_t *e){
+        //lv_timer_set_cb(adbms_read, adbms_data_scr_read);
+        state = 4;
+        load_transition();
+        init_data_list_screen();
+        load_current();
+    }
+    static void data_back_handler(lv_event_t *e){
+        if(state == 4){
+            //lv_timer_set_cb(adbms_read, adbms_start_scr_read);
+            state = 1;
+            load_transition();
+            init_start_screen();
+            load_current();
+        }else if(state == 3){
+            load_transition();
+            init_start_process_screen(process_type_selected);
+            load_current();
+        }
+    }
 
     void init_transition_screen(){
         trans_scr = lv_obj_create(NULL);
@@ -353,7 +373,9 @@ namespace gui{
         lv_obj_add_event_cb(buttons[0], charge_scr_switch_handler, LV_EVENT_CLICKED, NULL);
         lv_obj_add_event_cb(buttons[1], store_scr_switch_handler, LV_EVENT_CLICKED, NULL);
         lv_obj_add_event_cb(buttons[2], disch_scr_switch_handler, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(buttons[3], data_start_switch_handler, LV_EVENT_CLICKED, NULL);
         lv_obj_add_event_cb(buttons[4], cycle_scr_switch_handler, LV_EVENT_CLICKED, NULL);
+        
     }
 
     void init_process_screen(uint8_t process_type){
@@ -437,7 +459,7 @@ namespace gui{
         lv_obj_center(label_data);
     }
 
-    void init_data_list_screen(uint8_t n){
+    void init_data_list_screen(){
         curr_scr = lv_obj_create(NULL);
         lv_obj_add_style(curr_scr, &main_screen_style, LV_STATE_DEFAULT );
         static lv_coord_t col_dsc[] = {60, 60, 60, 60, 60, LV_GRID_TEMPLATE_LAST};
@@ -446,8 +468,35 @@ namespace gui{
         init_grid(cont, col_dsc, row_dsc);
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
         lv_obj_t *back_btn = lv_btn_create(cont);
+        lv_obj_t *data_btn = lv_btn_create(cont);
         lv_obj_t *prev_btn = lv_btn_create(cont);
         lv_obj_t *next_btn = lv_btn_create(cont);
+        init_button(back_btn, &main_buttons_styles[2], &main_buttons_pr_styles[2], 0, 10);
+        init_button(data_btn, &main_buttons_styles[0], &main_buttons_pr_styles[0], 4, 10);
+        init_button(prev_btn, &main_buttons_styles[5], &main_buttons_pr_styles[5], 1, 10);
+        init_button(next_btn, &main_buttons_styles[5], &main_buttons_pr_styles[5], 3, 10);
+        lv_obj_add_event_cb(back_btn, data_back_handler, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(next_btn, data_next_adbms_handler, LV_EVENT_CLICKED, NULL);
+        lv_obj_add_event_cb(prev_btn, data_prev_adbms_handler, LV_EVENT_CLICKED, NULL);
+
+
+        //button labels
+        lv_obj_t *label_back = lv_label_create(back_btn);
+        lv_obj_t *label_data = lv_label_create(data_btn);
+        lv_obj_t *label_prev = lv_label_create(prev_btn);
+        lv_obj_t *label_next = lv_label_create(next_btn);
+        
+        lv_label_set_text(label_back, "BACK");
+        lv_label_set_text(label_data, "DATA");
+        lv_label_set_text(label_prev, LV_SYMBOL_LEFT);
+        lv_label_set_text(label_next, LV_SYMBOL_RIGHT);
+
+        lv_obj_center(label_back);
+        lv_obj_center(label_data);
+        lv_obj_center(label_prev);
+        lv_obj_center(label_next);
+
+        //cells data labels;
     }
 
 
@@ -460,7 +509,6 @@ namespace gui{
     }
 
     void adbms_start_scr_read(lv_timer_t *timer){
-        
             adbms.cell_detect();
             tot_cell_qnt = adbms.get_tot_cell_qnt();
             sum_cell_volt = adbms.get_sum_cell_voltage();
@@ -480,10 +528,23 @@ namespace gui{
     void adbms_data_scr_read(lv_timer_t *timer){
         adbms.cell_detect();
         uint8_t *cells_qnt = adbms.get_cell_qnt();
+        tot_cell_qnt = adbms.get_tot_cell_qnt();
         uint8_t k = cells_qnt[current_adbms];
+        uint16_t **cells_value = adbms.read_cv_adc();
+        for(uint8_t i=0; i<k;i++){
+            lv_label_set_text_fmt(label_cells_voltage[i], "C%u: %.3f", i, adbms.convert_voltage(cells_value[current_adbms][i]));
+        }
+        for(uint8_t i=k; i<18;i++){
+            lv_label_set_text_fmt(label_cells_voltage[i], "C%u 0.000", i);
+        }
+    }
+
+    void adbms_process_scr_read(lv_timer_t *timer){
+        adbms.cell_detect();
+        tot_cell_qnt = adbms.get_tot_cell_qnt();
     }
 
     void init_adbms_task(){
-        adbms_read = lv_timer_create(adbms_start_scr_read, ADBMS_READ_PERIOD, NULL);
+        //adbms_read = lv_timer_create(adbms_start_scr_read, ADBMS_READ_PERIOD, NULL);
     }
 };

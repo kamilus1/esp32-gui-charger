@@ -6,8 +6,17 @@
 #include <cstring>
 
 namespace gui{
-    //gui state
+    //machine state
+    /*STATE DESCRIPTION
+    1 -> main screen
+    2 -> process screen
+    3 -> during process screen
+    4 -> data screen
+    5 -> settings screen
+
+    */
     static uint8_t state;
+    //energy and cells relate variable
     static uint32_t tot_cell_qnt;
     static float sum_cell_volt;
     static int temperature;
@@ -94,6 +103,7 @@ namespace gui{
 
     void adbms_start_scr_read(lv_timer_t *timer);
     void adbms_data_scr_read(lv_timer_t *timer);
+    void adbms_process_scr_read(lv_timer_t *timer);
 
     void process_charge(lv_timer_t *timer);
     void process_store(lv_timer_t *timer);

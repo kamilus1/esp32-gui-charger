@@ -159,6 +159,7 @@ namespace gui{
             load_transition();
             init_process_screen();
             load_current();
+            lv_timer_set_cb(adbms_read, adbms_process_scr_read);
         }
         
     }
@@ -168,6 +169,7 @@ namespace gui{
             load_transition();
             init_process_screen(STORE_PROCESS);
             load_current();
+            lv_timer_set_cb(adbms_read, adbms_process_scr_read);
         }
     }
     static void disch_scr_switch_handler(lv_event_t *e){
@@ -176,6 +178,7 @@ namespace gui{
             load_transition();
             init_process_screen(DISCHARGE_PROCESS);
             load_current();
+            lv_timer_set_cb(adbms_read, adbms_process_scr_read);
         }
     }
     static void cycle_scr_switch_handler(lv_event_t *e){
@@ -184,15 +187,17 @@ namespace gui{
             load_transition();
             init_process_screen(CYCLE_PROCESS);
             load_current();
+            lv_timer_set_cb(adbms_read, adbms_process_scr_read);
         }
     }
 
     static void process_back_handler(lv_event_t *e){
+        
         state = 1;
         load_transition();
         init_start_screen();
         load_current();
-    
+        lv_timer_set_cb(adbms_read, adbms_start_scr_read);
     }
 
     static void process_start_switch_handler(lv_event_t *e){
@@ -201,7 +206,8 @@ namespace gui{
         load_transition();
         init_start_process_screen(*process_type);
         load_current();
-    }
+        
+            }
 
     static void process_stop_handler(lv_event_t *e){
         static const char * btns[] = {"YES", "NO", ""};
@@ -246,24 +252,27 @@ namespace gui{
     }
 
     static void data_start_switch_handler(lv_event_t *e){
-        lv_timer_set_cb(adbms_read, adbms_data_scr_read);
+        
         state = 4;
         load_transition();
         init_data_list_screen();
         load_current();
+        lv_timer_set_cb(adbms_read, adbms_data_scr_read);
     }
     static void data_back_handler(lv_event_t *e){
         if(state == 4){
-            lv_timer_set_cb(adbms_read, adbms_start_scr_read);
+            
             state = 1;
             load_transition();
             init_start_screen();
             load_current();
+            lv_timer_set_cb(adbms_read, adbms_start_scr_read);
         }else if(state == 3){
-            lv_timer_set_cb(adbms_read, adbms_process_scr_read);
+            
             load_transition();
             init_start_process_screen(process_type_selected);
             load_current();
+            lv_timer_set_cb(adbms_read, adbms_process_scr_read);
         }
     }
 

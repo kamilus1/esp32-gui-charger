@@ -96,8 +96,7 @@ void setup() {
    indev_drv.read_cb = my_touchpad_read;
    lv_indev_drv_register( &indev_drv );
 
-    //initialize tasks
-    gui::init_adbms_task();
+    
      //Initialize styles
     gui::init_styles();
     gui::init_transition_screen();
@@ -106,6 +105,8 @@ void setup() {
    //gui::init_demo_screen();
    gui::init_start_screen();
    gui::load_current();
+   //initialize tasks
+    gui::init_adbms_task();
     //lv_example_win_1();
 
 }

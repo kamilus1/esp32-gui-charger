@@ -5,7 +5,7 @@ extern ina238 ina;
 namespace gui{
     void init_styles(){
         state = 1;
-        tot_cell_qnt = 0;
+        tot_cell_qnt = 1;
         sum_cell_volt = 0.0;
         temperature = 0;
         input_voltage = 0;
@@ -246,7 +246,7 @@ namespace gui{
     }
 
     static void data_start_switch_handler(lv_event_t *e){
-        //lv_timer_set_cb(adbms_read, adbms_data_scr_read);
+        lv_timer_set_cb(adbms_read, adbms_data_scr_read);
         state = 4;
         load_transition();
         init_data_list_screen();
@@ -254,12 +254,13 @@ namespace gui{
     }
     static void data_back_handler(lv_event_t *e){
         if(state == 4){
-            //lv_timer_set_cb(adbms_read, adbms_start_scr_read);
+            lv_timer_set_cb(adbms_read, adbms_start_scr_read);
             state = 1;
             load_transition();
             init_start_screen();
             load_current();
         }else if(state == 3){
+            lv_timer_set_cb(adbms_read, adbms_process_scr_read);
             load_transition();
             init_start_process_screen(process_type_selected);
             load_current();
@@ -496,7 +497,17 @@ namespace gui{
         lv_obj_center(label_prev);
         lv_obj_center(label_next);
 
-        //cells data labels;
+        //cells data labels & containers;
+        lv_obj_t *cells_voltage_conts[18];
+
+        for(uint8_t i=0; i<18;i++){
+            cells_voltage_conts[i] = lv_obj_create(cont);
+            lv_obj_remove_style_all(cells_voltage_conts[i]);
+            init_cont(cells_voltage_conts[i], &basic_label_style, (i/9)*2, 1+i%9, 2);
+            label_cells_voltage[i] = lv_label_create(cells_voltage_conts[i]);
+            lv_label_set_text_fmt(label_cells_voltage[i], "C%u: 0.000", (i+1));
+            lv_obj_align(label_cells_voltage[i], LV_ALIGN_LEFT_MID, 1, 0);
+        }
     }
 
 
@@ -532,10 +543,10 @@ namespace gui{
         uint8_t k = cells_qnt[current_adbms];
         uint16_t **cells_value = adbms.read_cv_adc();
         for(uint8_t i=0; i<k;i++){
-            lv_label_set_text_fmt(label_cells_voltage[i], "C%u: %.3f", i, adbms.convert_voltage(cells_value[current_adbms][i]));
+            lv_label_set_text_fmt(label_cells_voltage[i], "C%u: %.3f", (i+1), adbms.convert_voltage(cells_value[current_adbms][i]));
         }
         for(uint8_t i=k; i<18;i++){
-            lv_label_set_text_fmt(label_cells_voltage[i], "C%u 0.000", i);
+            lv_label_set_text_fmt(label_cells_voltage[i], "C%u 0.000", (i+1));
         }
     }
 
@@ -545,6 +556,6 @@ namespace gui{
     }
 
     void init_adbms_task(){
-        //adbms_read = lv_timer_create(adbms_start_scr_read, ADBMS_READ_PERIOD, NULL);
+        adbms_read = lv_timer_create(adbms_start_scr_read, ADBMS_READ_PERIOD, NULL);
     }
 };

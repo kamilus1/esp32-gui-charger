@@ -5,7 +5,7 @@ extern ina238 ina;
 namespace gui{
     void init_styles(){
         state = 1;
-        tot_cell_qnt = 1;
+        tot_cell_qnt = 0;
         sum_cell_volt = 0.0;
         temperature = 0;
         input_voltage = 0;

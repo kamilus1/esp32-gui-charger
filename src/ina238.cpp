@@ -18,13 +18,13 @@ std::map<std::string, uint8_t> ina238::registers = {
     {"MAFUCATURER_ID", 0x3e},
     {"DEVICE_ID", 0x3f}
 };
-ina238::ina238(uint16_t addr, uint16_t r_shunt, uint8_t sda, uint8_t scl, uint32_t freq,  uint8_t i2c_bus): ina_addr(addr), r(r_shunt){
+ina238::ina238(uint16_t addr, float r_shunt, uint8_t sda, uint8_t scl, uint32_t freq,  uint8_t i2c_bus): ina_addr(addr), r(r_shunt){
     i2c_wire = new TwoWire(i2c_bus);
     i2c_wire->begin(sda, scl, freq);
 
 }
 
-ina238::ina238(uint16_t addr,  TwoWire *two_wire, uint16_t r_shunt): ina_addr(addr), r(r_shunt){
+ina238::ina238(uint16_t addr,  TwoWire *two_wire, float r_shunt): ina_addr(addr), r(r_shunt){
     i2c_wire = two_wire;
 
 }
@@ -60,6 +60,7 @@ void ina238::write_config1(uint8_t rst, uint8_t convdly, uint8_t adcrange){
     for(uint8_t i=0;i<4;i++){
         this->write_data[i] = 0;
     }
+    this->adc_range = (adcrange == 1) ? true: false;
     this->write_data[0] = this->registers["CONFIG_1"];
     this->write_data[1] = (rst << 7); 
     this->write_data[2] |= (adcrange >> 2);
@@ -86,6 +87,9 @@ void ina238::write_currlsbcalc_3(uint16_t currlsb){
     }
     this->write_data[0] = this->registers["CURRLSBCALC_3"];
     this->curr_lsb_calc = currlsb;
+    this->curr_lsb_calc /= (pow(2, 15));
+    float shunt_cal = 819.2 * pow(10, 6) * this->curr_lsb_calc * this->r;
+    currlsb = (uint16_t) shunt_cal;
     this->write_data[1] = currlsb >> 8;
     this->write_data[2] = 0x00ff & currlsb;
     this->write_command(this->write_data, 3);
@@ -98,8 +102,6 @@ float ina238::read_current(){
     curr <<= 8;
     curr |= data[1];
     float curr_lsb = this->curr_lsb_calc;
-    curr_lsb /= this->r;
-    curr_lsb /= 13107.2*1000000;
     return ((float)curr) * curr_lsb;
 }
 

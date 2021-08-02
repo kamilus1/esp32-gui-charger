@@ -26,4 +26,14 @@ namespace gui{
         lv_obj_set_size(cont, w, h);
         lv_obj_center(cont);
     }
+
+    void init_bar(lv_obj_t *bar, lv_style_t *indic_style, lv_style_t *main_style, lv_coord_t w, lv_coord_t h){
+        lv_obj_remove_style_all(bar);
+        lv_obj_add_style(bar, main_style, LV_PART_MAIN);
+        lv_obj_add_style(bar, indic_style, LV_PART_INDICATOR);
+        lv_obj_set_size(bar, w, h);
+        lv_bar_set_value(bar, 0, LV_ANIM_ON);
+        
+        lv_obj_center(bar);
+    }
 };

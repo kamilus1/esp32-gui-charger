@@ -7,6 +7,7 @@ class ADBMS1818Class : public ADBMS1818{
     uint32_t tot_cell_qnt;
     uint8_t adbms_status;
     static const float vcell_min_exist;
+    static const float vcell_max;
 public:
     ADBMS1818Class(uint8_t port,  uint8_t csPin, uint8_t n = 1, uint32_t freq= 1000000, uint8_t br = 6): ADBMS1818(port, csPin, n, freq, br){
         cell_qnt = new uint8_t(n);
@@ -26,4 +27,5 @@ public:
     float get_sum_cell_voltage();
     uint8_t * get_cell_qnt();
     uint8_t get_status();
+    int voltage_percent(float voltage_value);
 };

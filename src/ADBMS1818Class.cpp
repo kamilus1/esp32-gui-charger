@@ -1,6 +1,7 @@
 #include "ADBMS1818Class.hpp"
 
 const float ADBMS1818Class::vcell_min_exist = 1000.0;
+const float ADBMS1818Class::vcell_max = 4700.0;
 
 void ADBMS1818Class::start_all_conversions(){
     this->start_cv_adc_conversion();
@@ -97,4 +98,17 @@ float ADBMS1818Class::get_sum_cell_voltage(){
     }else{
         return 0;
     }
+}
+
+int ADBMS1818Class::voltage_percent(float voltage_value){
+    voltage_value -= this->vcell_min_exist;
+    if(voltage_value <= 0){
+        return 0;
+    }
+    voltage_value /= (this->vcell_max - this->vcell_min_exist);
+    voltage_value *= 100;
+    if(voltage_value >= 100){
+        return 100;
+    }
+    return (int) voltage_value;
 }

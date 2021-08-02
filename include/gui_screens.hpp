@@ -45,7 +45,10 @@ namespace gui{
     static lv_style_t error_label_style;
     static lv_style_t msg_box_style;
     static lv_style_t msg_box_btn_style;
-
+    static lv_style_t bar_style;
+    static lv_style_t green_bar_style;
+    static lv_style_t red_bar_style;
+    static lv_style_t yellow_bar_style;
     
     void init_styles();
     void init_main_scr_style();
@@ -57,6 +60,7 @@ namespace gui{
     void init_msg_box_btn_style();
     void init_basic_label_style();
     void init_error_label_style();
+    void init_bars_style();
 
 
 
@@ -73,6 +77,7 @@ namespace gui{
     static void process_stop_msgbox_handler(lv_event_t *e);
     static void data_next_adbms_handler(lv_event_t *e);
     static void data_prev_adbms_handler(lv_event_t *e);
+    static void data_next_mode_handler(lv_event_t *e);
     static void data_start_switch_handler(lv_event_t *e);
     static void data_process_switch_handler(lv_event_t *e);
     static void data_back_handler(lv_event_t *e);
@@ -85,6 +90,7 @@ namespace gui{
     static lv_obj_t *label_cell_volt_temp;
     static lv_obj_t *label_input_electricity;
     static lv_obj_t *label_cells_voltage[18];
+    static lv_obj_t *bars_cells_voltage[18];
     static lv_obj_t *label_special_symbol;
     void init_demo_screen();
     void init_start_screen();
@@ -103,6 +109,8 @@ namespace gui{
 
     void adbms_start_scr_read(lv_timer_t *timer);
     void adbms_data_scr_read(lv_timer_t *timer);
+    void adbms_data_candles_scr_read(lv_timer_t *timer);
+    void adbms_data_graph_scr_read(lv_timer_t *timer);
     void adbms_process_scr_read(lv_timer_t *timer);
 
     void process_charge(lv_timer_t *timer);

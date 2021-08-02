@@ -149,9 +149,9 @@ namespace gui{
         lv_style_set_bg_opa(&red_bar_style, LV_OPA_COVER);
         lv_style_set_bg_opa(&yellow_bar_style, LV_OPA_COVER);
 
-        lv_style_set_bg_color(&green_bar_style, main_button_colors[0]);
-        lv_style_set_bg_color(&red_bar_style, main_button_colors[2]);
-        lv_style_set_bg_color(&yellow_bar_style, main_button_colors[1]);
+        lv_style_set_bg_color(&green_bar_style, main_buttons_colors[0]);
+        lv_style_set_bg_color(&red_bar_style, main_buttons_colors[2]);
+        lv_style_set_bg_color(&yellow_bar_style, main_buttons_colors[1]);
 
         lv_style_set_radius(&green_bar_style, 2);
         lv_style_set_radius(&red_bar_style, 2);
@@ -578,7 +578,7 @@ namespace gui{
     void init_data_candles_screen(){
         curr_scr = lv_obj_create(NULL);
         lv_obj_add_style(curr_scr, &main_screen_style, LV_STATE_DEFAULT );
-        static lv_coord_t col_dsc[] = {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15 LV_GRID_TEMPLATE_LAST};
+        static lv_coord_t col_dsc[] = {15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, LV_GRID_TEMPLATE_LAST};
         static lv_coord_t row_dsc[] = {25, 20, 120, 30,   LV_GRID_TEMPLATE_LAST};
         lv_obj_t *cont = lv_obj_create(curr_scr);
         init_grid(cont, col_dsc, row_dsc);

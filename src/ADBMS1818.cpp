@@ -88,6 +88,10 @@ void ADBMS1818::init(){
     this->write_buff = new uint8_t [this->wbuff_size];
     this->sctl = new uint8_t [this->n*9];
     this->pwm = new uint8_t [this->n*9];
+    for(uint8_t i=0; i<this->n*9; i++){
+        this->sctl[i] = 0;
+        this->pwm[i] = 0;
+    }
     this->vuv = 0;
     this->vov = 0;
     this->dcc = new uint32_t [this->n]; //dont allow discharge

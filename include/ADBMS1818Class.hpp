@@ -22,6 +22,7 @@ public:
         adbms_status = COMM_ACTIVE;
     }
     void start_all_conversions();
+    void start_cell_ballancing(uint8_t value = 1);
     bool cell_detect();
     uint32_t get_tot_cell_qnt();
     float get_sum_cell_voltage();

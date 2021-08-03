@@ -108,6 +108,8 @@ void setup() {
    //initialize tasks
     gui::init_adbms_task();
     //lv_example_win_1();
+    //start cell ballancing
+    adbms.start_cell_ballancing();
 
 }
 

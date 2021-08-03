@@ -112,3 +112,16 @@ int ADBMS1818Class::voltage_percent(float voltage_value){
     }
     return (int) voltage_value;
 }
+
+void ADBMS1818Class::start_cell_ballancing(uint8_t value){
+    this->cell_detect(); 
+    for(uint8_t i=0; i<this->n;i++){
+        for(uint8_t j=0; j<this->cell_qnt[i]; j++){
+            this->set_sct_pin_value(value, (j+1), i);
+        }
+        for(uint8_t j=this->cell_qnt[i]; j<18; j++){
+            this->set_sct_pin_value(value, (j+1), i);
+        }
+    }
+    this->write_sct_reg();
+}

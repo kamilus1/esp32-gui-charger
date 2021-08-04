@@ -112,6 +112,7 @@ namespace gui{
     void adbms_data_candles_scr_read(lv_timer_t *timer);
     void adbms_data_graph_scr_read(lv_timer_t *timer);
     void adbms_process_scr_read(lv_timer_t *timer);
+    void adbms_settings_scr_read(lv_timer_t *timer);
 
     void process_charge(lv_timer_t *timer);
     void process_store(lv_timer_t *timer);

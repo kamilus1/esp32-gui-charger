@@ -68,7 +68,7 @@ bool ADBMS1818Class::cell_detect(){
     for(uint8_t i=0; i<this->n;i++){
                     delete[] cell_voltage[i];
                 }
-                delete[] cell_voltage;
+    delete[] cell_voltage;
     return true;
 }
 

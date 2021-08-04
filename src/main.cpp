@@ -164,6 +164,11 @@ static void UART_ISR_ROUTINE(void *pvParameters){
         int UART0_data_length = 0;
         ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&UART0_data_length));
         UART0_data_length = uart_read_bytes(UART_NUM_0, UART0_data, UART0_data_length, 100);
+        UART0_data_length -= 2;
+        char command[UART0_data_length];
+        for(int i=0; i<UART0_data_length; i++){
+          command[i] = (char) UART0_data[i];
+        }
         char data[12];
         sprintf(data, "%d\r\n", UART0_data_length);
         uart_write_bytes(UART_NUM_0, data, strlen(data));

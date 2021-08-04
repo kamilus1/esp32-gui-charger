@@ -5,10 +5,11 @@
 #include <map>
 
 namespace huart{
-    lv_timer_t *task1;
-    const std::map<std::string, uint8_t> tasks_commands;
+    lv_timer_t *transmitting_task;
+    bool is_transmiting;
+    const char *commands_list[7] {"gd", "sd", "st", "str", "shp", "sp", "ht"};
 
     void init_tasks();
-
+    void start_transmitting();
 
 };

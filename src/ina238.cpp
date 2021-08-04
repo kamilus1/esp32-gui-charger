@@ -63,8 +63,9 @@ void ina238::write_config1(uint8_t rst, uint8_t convdly, uint8_t adcrange){
     this->adc_range = (adcrange == 1) ? true: false;
     this->write_data[0] = this->registers["CONFIG_1"];
     this->write_data[1] = (rst << 7); 
-    this->write_data[2] |= (adcrange >> 2);
-    this->write_data[2] = adcrange << 3;
+    this->write_data[1] |= (convdly >> 2);
+    this->write_data[2] = (convdly << 6);
+    this->write_data[2] |= adcrange << 3;
     this->write_command(this->write_data, 3);
 }
 void ina238::write_adc_config2(uint8_t mode, uint8_t vcbust, uint8_t vshct, uint8_t vtct, uint8_t avg){
@@ -102,6 +103,7 @@ float ina238::read_current(){
     curr <<= 8;
     curr |= data[1];
     float curr_lsb = this->curr_lsb_calc;
+    curr_lsb = this->adc_range == true? curr_lsb*4: curr_lsb;
     return ((float)curr) * curr_lsb;
 }
 

@@ -454,6 +454,14 @@ namespace gui{
         lv_obj_t *cont = lv_obj_create(curr_scr);
         init_grid(cont, col_dsc, row_dsc);
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
+        //info container
+        lv_obj_t *info_cont = lv_obj_create(cont);
+        lv_obj_remove_style_all(info_cont);
+        init_cont(info_cont, &info_cont_style, 0, 0, 5);
+        //info cont label
+        label_info_cont = lv_label_create(info_cont);
+        lv_obj_set_style_text_font(label_info_cont, &lv_font_montserrat_16, LV_STATE_DEFAULT);
+        lv_label_set_text(label_info_cont, "0-S BAT DETECTED 0.0V 0°C");
         
         lv_obj_t *back_btn = lv_btn_create(cont);
         lv_obj_t *start_btn = lv_btn_create(cont);
@@ -463,13 +471,8 @@ namespace gui{
         lv_obj_add_event_cb(start_btn, process_start_switch_handler, LV_EVENT_CLICKED, &process_type_selected);
 
         lv_obj_t *process_cont = lv_obj_create(cont);
-        lv_obj_t *info_cont = lv_obj_create(cont);
         lv_obj_remove_style_all(process_cont);
-        lv_obj_remove_style_all(info_cont);
-        
         init_cont(process_cont, &process_label_style, 2, 6);
-        init_cont(info_cont, &info_cont_style, 0, 0, 4);
-        
         
         lv_obj_t *label_back_btn = lv_label_create(back_btn);
         lv_obj_t *label_start_btn = lv_label_create(start_btn);
@@ -495,19 +498,23 @@ namespace gui{
         lv_obj_t *cont = lv_obj_create(curr_scr);
         init_grid(cont, col_dsc, row_dsc);
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
-        
-
+        //info container
+        lv_obj_t *info_cont = lv_obj_create(cont);
+        lv_obj_remove_style_all(info_cont);
+        init_cont(info_cont, &info_cont_style, 0, 0, 5);
+        //info cont label
+        label_info_cont = lv_label_create(info_cont);
+        lv_obj_set_style_text_font(label_info_cont, &lv_font_montserrat_16, LV_STATE_DEFAULT);
+        lv_label_set_text(label_info_cont, "0-S BAT DETECTED 0.0V 0°C");
+        //buttons
         lv_obj_t *stop_btn = lv_btn_create(cont);
         lv_obj_t *data_btn = lv_btn_create(cont);
         init_button(stop_btn, &main_buttons_styles[2], &main_buttons_pr_styles[2], 0, 5);
         init_button(data_btn, &main_buttons_styles[0], &main_buttons_pr_styles[0], 4, 5);
         lv_obj_add_event_cb(stop_btn, process_stop_handler, LV_EVENT_CLICKED, NULL);
-        
-        lv_obj_t *info_cont = lv_obj_create(cont);
+        //process cont
         lv_obj_t *process_cont = lv_obj_create(cont);
-        lv_obj_remove_style_all(info_cont);
         lv_obj_remove_style_all(process_cont);
-        init_cont(info_cont, &info_cont_style, 0, 0, 5);
         init_cont(process_cont, &process_label_style, 0, 1, 5);
 
         lv_obj_t *label_process = lv_label_create(process_cont);
@@ -534,8 +541,12 @@ namespace gui{
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
         //info container
         lv_obj_t *info_cont = lv_obj_create(cont);
+        lv_obj_remove_style_all(info_cont);
         init_cont(info_cont, &info_cont_style, 0, 0, 5);
-
+        //info cont label
+        label_info_cont = lv_label_create(info_cont);
+        lv_obj_set_style_text_font(label_info_cont, &lv_font_montserrat_16, LV_STATE_DEFAULT);
+        lv_label_set_text(label_info_cont, "0-S BAT DETECTED 0.0V 0°C");
         //buttons
         lv_obj_t *back_btn = lv_btn_create(cont);
         lv_obj_t *data_btn = lv_btn_create(cont);
@@ -590,7 +601,12 @@ namespace gui{
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
          //info container
         lv_obj_t *info_cont = lv_obj_create(cont);
+        lv_obj_remove_style_all(info_cont);
         init_cont(info_cont, &info_cont_style, 0, 0, 18);
+        //info cont label
+        label_info_cont = lv_label_create(info_cont);
+        lv_obj_set_style_text_font(label_info_cont, &lv_font_montserrat_16, LV_STATE_DEFAULT);
+        lv_label_set_text(label_info_cont, "0-S BAT DETECTED 0.0V 0°C");
         //buttons;
         lv_obj_t *back_btn = lv_btn_create(cont);
         lv_obj_t *data_btn = lv_btn_create(cont);
@@ -651,7 +667,12 @@ namespace gui{
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
          //info container
         lv_obj_t *info_cont = lv_obj_create(cont);
+        lv_obj_remove_style_all(info_cont);
         init_cont(info_cont, &info_cont_style, 0, 0, 5);
+        //info cont label
+        label_info_cont = lv_label_create(info_cont);
+        lv_obj_set_style_text_font(label_info_cont, &lv_font_montserrat_16, LV_STATE_DEFAULT);
+        lv_label_set_text(label_info_cont, "0-S BAT DETECTED 0.0V 0°C");
         //buttons
         lv_obj_t *back_btn = lv_btn_create(cont);
         lv_obj_t *data_btn = lv_btn_create(cont);
@@ -665,7 +686,7 @@ namespace gui{
         lv_obj_add_event_cb(next_btn, data_next_adbms_handler, LV_EVENT_CLICKED, NULL);
         lv_obj_add_event_cb(prev_btn, data_prev_adbms_handler, LV_EVENT_CLICKED, NULL);
         lv_obj_add_event_cb(data_btn, data_next_mode_handler, LV_EVENT_CLICKED, NULL);
-
+        
         //button labels
         lv_obj_t *label_back = lv_label_create(back_btn);
         lv_obj_t *label_data = lv_label_create(data_btn);
@@ -713,6 +734,12 @@ namespace gui{
         adbms.cell_detect();
         uint8_t *cells_qnt = adbms.get_cell_qnt();
         tot_cell_qnt = adbms.get_tot_cell_qnt();
+        sum_cell_volt = adbms.get_sum_cell_voltage();
+        if(ina.device_found()){
+            temperature = (int)ina.read_temperature();
+        }else{
+            temperature = 0;
+        }
         uint8_t k = cells_qnt[current_adbms];
         uint16_t **cells_value = adbms.read_cv_adc();
         for(uint8_t i=0; i<k;i++){
@@ -721,6 +748,7 @@ namespace gui{
         for(uint8_t i=k; i<18;i++){
             lv_label_set_text_fmt(label_cells_voltage[i], "C%u 0.000", (i+1));
         }
+        lv_label_set_text_fmt(label_info_cont, "%u-s Battery detected %.1fV %d°c", tot_cell_qnt, sum_cell_volt, temperature);
         
     }
 
@@ -728,8 +756,14 @@ namespace gui{
         adbms.cell_detect();
         uint8_t *cells_qnt = adbms.get_cell_qnt();
         tot_cell_qnt = adbms.get_tot_cell_qnt();
+        sum_cell_volt = adbms.get_sum_cell_voltage();
         uint8_t k = cells_qnt[current_adbms];
         uint16_t **cells_value = adbms.read_cv_adc();
+        if(ina.device_found()){
+            temperature = (int)ina.read_temperature();
+        }else{
+            temperature = 0;
+        }
         for(uint8_t i=0; i<k;i++){
             lv_label_set_text_fmt(label_cells_voltage[i],  "%.3f", adbms.convert_voltage(cells_value[current_adbms][i]));
             lv_bar_set_value(bars_cells_voltage[i], adbms.voltage_percent(adbms.convert_voltage(cells_value[current_adbms][i])), LV_ANIM_ON);
@@ -738,17 +772,31 @@ namespace gui{
             lv_label_set_text(label_cells_voltage[i], "0.000");
             lv_bar_set_value(bars_cells_voltage[i], 0, LV_ANIM_OFF);
         }
-        
+        lv_label_set_text_fmt(label_info_cont, "%u-s Battery detected %.1fV %d°c", tot_cell_qnt, sum_cell_volt, temperature);
     }
 
     void adbms_data_graph_scr_read(lv_timer_t *timer){
         adbms.cell_detect();
         tot_cell_qnt = adbms.get_tot_cell_qnt();
+        sum_cell_volt = adbms.get_sum_cell_voltage();
+        if(ina.device_found()){
+            temperature = (int)ina.read_temperature();
+        }else{
+            temperature = 0;
+        }
+        lv_label_set_text_fmt(label_info_cont, "%u-s Battery detected %.1fV %d°c", tot_cell_qnt, sum_cell_volt, temperature);
     }
 
     void adbms_process_scr_read(lv_timer_t *timer){
         adbms.cell_detect();
         tot_cell_qnt = adbms.get_tot_cell_qnt();
+        sum_cell_volt = adbms.get_sum_cell_voltage();
+        if(ina.device_found()){
+            temperature = (int)ina.read_temperature();
+        }else{
+            temperature = 0;
+        }
+        lv_label_set_text_fmt(label_info_cont, "%u-s Battery detected %.1fV %d°c", tot_cell_qnt, sum_cell_volt, temperature);
     }
 
     void init_adbms_task(){

@@ -88,6 +88,7 @@ namespace gui{
     static lv_obj_t *label_cell_qnt;
     static lv_obj_t *label_cell_volt_temp;
     static lv_obj_t *label_input_electricity;
+    static lv_obj_t *label_info_cont;
     static lv_obj_t *label_cells_voltage[18];
     static lv_obj_t *bars_cells_voltage[18];
     static lv_obj_t *label_special_symbol;

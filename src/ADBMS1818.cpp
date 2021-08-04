@@ -646,3 +646,7 @@ void ADBMS1818::write_sct_reg(){
 void ADBMS1818::set_dcc(uint8_t n, uint32_t val){
     this->dcc[n] = val;
 }
+
+uint8_t ADBMS1818::get_n(){
+    return this->n;
+}

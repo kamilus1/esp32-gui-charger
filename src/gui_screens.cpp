@@ -711,6 +711,11 @@ namespace gui{
         for(uint8_t i=k; i<18;i++){
             lv_label_set_text_fmt(label_cells_voltage[i], "C%u 0.000", (i+1));
         }
+        for(uint8_t i=0; i< adbms.get_n(); i++){
+            delete[] cells_value[i];
+        }
+        delete[] cells_value;
+        delete[] cells_qnt;
     }
 
     void adbms_data_candles_scr_read(lv_timer_t *timer){
@@ -727,6 +732,11 @@ namespace gui{
             lv_label_set_text(label_cells_voltage[i], "0.000");
             lv_bar_set_value(bars_cells_voltage[i], 0, LV_ANIM_OFF);
         }
+        for(uint8_t i=0; i< adbms.get_n(); i++){
+            delete[] cells_value[i];
+        }
+        delete[] cells_value;
+        delete[] cells_qnt;
     }
 
     void adbms_data_graph_scr_read(lv_timer_t *timer){

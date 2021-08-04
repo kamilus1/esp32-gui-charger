@@ -107,5 +107,5 @@ class ADBMS1818{
         uint16_t ** read_cv_adc();
         uint16_t ** read_aux_adc();
         float convert_voltage(uint16_t voltage);
-
+        uint8_t get_n();
 };

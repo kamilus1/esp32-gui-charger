@@ -56,11 +56,19 @@ bool ADBMS1818Class::cell_detect(){
         while(j<18){
             if(this->convert_voltage(cell_voltage[i][j])*1000.0 >= this->vcell_min_exist){
                 this->adbms_status = COMM_STOPPED;
+                for(uint8_t i=0; i<this->n;i++){
+                    delete[] cell_voltage[i];
+                }
+                delete[] cell_voltage;
                 return false;
             }
             j++;
         }
     }
+    for(uint8_t i=0; i<this->n;i++){
+                    delete[] cell_voltage[i];
+                }
+                delete[] cell_voltage;
     return true;
 }
 
@@ -94,6 +102,10 @@ float ADBMS1818Class::get_sum_cell_voltage(){
                 voltage_sum += this->convert_voltage(cell_voltage[i][j]);
             }
         }
+        for(uint8_t i=0; i< this->n;i++){
+            delete[] cell_voltage[i];
+        }
+        delete[] cell_voltage;
         return voltage_sum;
     }else{
         return 0;

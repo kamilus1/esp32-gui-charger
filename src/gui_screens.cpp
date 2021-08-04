@@ -532,6 +532,11 @@ namespace gui{
         lv_obj_t *cont = lv_obj_create(curr_scr);
         init_grid(cont, col_dsc, row_dsc);
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
+        //info container
+        lv_obj_t *info_cont = lv_obj_create(cont);
+        init_cont(info_cont, &info_cont_style, 0, 0, 5);
+
+        //buttons
         lv_obj_t *back_btn = lv_btn_create(cont);
         lv_obj_t *data_btn = lv_btn_create(cont);
         lv_obj_t *prev_btn = lv_btn_create(cont);
@@ -583,6 +588,9 @@ namespace gui{
         lv_obj_t *cont = lv_obj_create(curr_scr);
         init_grid(cont, col_dsc, row_dsc);
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
+         //info container
+        lv_obj_t *info_cont = lv_obj_create(cont);
+        init_cont(info_cont, &info_cont_style, 0, 0, 18);
         //buttons;
         lv_obj_t *back_btn = lv_btn_create(cont);
         lv_obj_t *data_btn = lv_btn_create(cont);
@@ -641,7 +649,9 @@ namespace gui{
         lv_obj_t *cont = lv_obj_create(curr_scr);
         init_grid(cont, col_dsc, row_dsc);
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
-
+         //info container
+        lv_obj_t *info_cont = lv_obj_create(cont);
+        init_cont(info_cont, &info_cont_style, 0, 0, 5);
         //buttons
         lv_obj_t *back_btn = lv_btn_create(cont);
         lv_obj_t *data_btn = lv_btn_create(cont);

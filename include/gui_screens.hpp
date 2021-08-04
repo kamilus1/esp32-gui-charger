@@ -13,7 +13,6 @@ namespace gui{
     3 -> during process screen
     4 -> data screen
     5 -> settings screen
-
     */
     static uint8_t state;
     //energy and cells relate variable

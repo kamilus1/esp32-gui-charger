@@ -14,6 +14,7 @@
 
 #include "user_defines.h"
 
+
 #define BAUD_RATE 115200
 #define SERIAL_PORT_NR UART_NUM_0
 #define BUF_SIZE (1024*2)

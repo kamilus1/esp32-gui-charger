@@ -94,11 +94,18 @@ namespace gui{
     static lv_obj_t *label_special_symbol;
     void init_demo_screen();
     void init_start_screen();
+    //process screens
     void init_process_screen(uint8_t process_type = CHARGE_PROCESS);
     void init_start_process_screen(uint8_t process_type = CHARGE_PROCESS);
+    //data screens
     void init_data_list_screen();
     void init_data_candles_screen();
     void init_data_process_graph();
+    //settings screens
+    void init_settings_start_screen();
+    void init_settings_battery_screen();
+    void init_settings_misc_screen();
+    //helper screens;
     void init_transition_screen();
     void load_transition();
     void load_current();

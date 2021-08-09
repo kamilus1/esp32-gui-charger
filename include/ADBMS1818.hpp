@@ -38,6 +38,7 @@ const uint16_t crc15Table[256] {0x0,0xc599, 0xceab, 0xb32, 0xd8cf, 0x1d56, 0x166
 //use default configuration for now.
 class ADBMS1818{
     protected:
+   
         SPIClass *spi;
         SPISettings *spi_settings;
         static std::map<std::string, uint16_t> commands;
@@ -48,7 +49,8 @@ class ADBMS1818{
         uint8_t cs, n, byte_reg;
         uint8_t *read_buff;
         uint8_t *write_buff;
-        
+        uint16_t **cells_value; 
+        uint16_t **aux_value;
         uint8_t pec[2];
         
         //configuration bits for write commands
@@ -104,8 +106,16 @@ class ADBMS1818{
         void set_pwm_pin_value(uint8_t value, uint8_t pin, uint8_t n1=0);
         void write_sct_reg();
         void write_pwm_reg();
-        uint16_t ** read_cv_adc();
-        uint16_t ** read_aux_adc();
+        void read_cv_adc();
+        void read_aux_adc();
         float convert_voltage(uint16_t voltage);
         uint8_t get_n();
+
+        const uint16_t &operator () (int x, int y) const{
+            if(x < this->n && y < 18){
+                return this->cells_value[x][y];
+            }else{
+                return 0;
+            }
+        }
 };

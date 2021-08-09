@@ -119,12 +119,12 @@ void setup() {
     adbms.start_cell_ballancing();
     //setup core 0 task
     xTaskCreatePinnedToCore(gui_loop_code, 
-    "GUI Loop", 
-    15000, 
-    NULL, 
-    1, 
-    &Task1, 
-    0
+          "GUI Loop", 
+          15000, 
+          NULL, 
+          1, 
+          &Task1, 
+          0
     );
 }
 

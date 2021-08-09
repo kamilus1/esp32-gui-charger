@@ -82,6 +82,14 @@ ADBMS1818::ADBMS1818(uint8_t cspin, uint8_t n, uint32_t freq,  uint8_t br): f(fr
     this->init();
 }
 void ADBMS1818::init(){
+    this->cells_value = new uint16_t *[this->n];
+    for(uint8_t i=0; i<this->n;i++){
+            this->cells_value[i] = new uint16_t[18];
+        }
+    this->aux_value = new uint16_t *[this->n];
+    for(uint8_t i=0; i<this->n;i++){
+            this->aux_value[i] = new uint16_t[9];
+        }
     this->rbuff_size = (this->byte_reg+2)*this->n;
     this->wbuff_size = (this->byte_reg)*this->n;
     this->read_buff = new uint8_t [this->rbuff_size];
@@ -479,12 +487,8 @@ void ADBMS1818::start_cv_sc_conversion(){
     this->poll_command(command2);
 }
 
-uint16_t** ADBMS1818::read_cv_adc(){
+void ADBMS1818::read_cv_adc(){
     this->wake_up();
-    uint16_t **cells_voltage = new uint16_t *[this->n];
-    for(int i=0;i<this->n;i++){
-        cells_voltage[i] = new uint16_t [18];
-    }
     uint16_t command;
     uint8_t command2[2];
     std::vector<std::string> comm_keys {"RDCVA", "RDCVB", "RDCVC", "RDCVD", "RDCVE", "RDCVF"};
@@ -495,23 +499,17 @@ uint16_t** ADBMS1818::read_cv_adc(){
         this->read_command(command2, this->read_buff);
         for(int i=0;i<this->n;i++){
             for(int k=0;k<6;k+=2){
-                    cells_voltage[i][(k/2+j)] = this->read_buff[(i*8+ k+1)];
-                    cells_voltage[i][(k/2+j)] <<= 8;
-                    cells_voltage[i][(k/2+j)] |= this->read_buff[i*8+k];
+                    this->cells_value[i][(k/2+j)] = this->read_buff[(i*8+ k+1)];
+                    this->cells_value[i][(k/2+j)] <<= 8;
+                    this->cells_value[i][(k/2+j)] |= this->read_buff[i*8+k];
                 }
             
         }
         j += 3;
     }
-    
-    return cells_voltage;
 }
-uint16_t ** ADBMS1818::read_aux_adc(){
+void ADBMS1818::read_aux_adc(){
     this->wake_up();
-    uint16_t **aux_voltage = new uint16_t *[this->n];
-    for(int i=0;i<this->n;i++){
-        aux_voltage[i] = new uint16_t [9];
-    }
     std::vector<std::string> comm_keys = {"RDAUXA", "RDAUXC"};
     std::string last_command = "RDAUXD", second_command = "RDAUXB";
     uint16_t command;
@@ -523,9 +521,9 @@ uint16_t ** ADBMS1818::read_aux_adc(){
         this->read_command(command2, this->read_buff);
         for(int i=0;i<this->n;i++){
             for(int k=0;k<6;k+=2){
-                aux_voltage[i][(k/2+j)] = this->read_buff[i*8+ k+1];
-                aux_voltage[i][(k/2+j)] <<= 8;
-                aux_voltage[i][(k/2+j)] |= this->read_buff[i*8+ k];
+                this->aux_value[i][(k/2+j)] = this->read_buff[i*8+ k+1];
+                this->aux_value[i][(k/2+j)] <<= 8;
+                this->aux_value[i][(k/2+j)] |= this->read_buff[i*8+ k];
             }
         }
         j += 3;
@@ -535,9 +533,9 @@ uint16_t ** ADBMS1818::read_aux_adc(){
     this->read_command(command2, this->read_buff);
     for(int i=0;i<this->n;i++){
         for(int k=0;k<4;k+=2){
-            aux_voltage[i][(k/2+j)] = this->read_buff[i*8+ k+1];
-            aux_voltage[i][(k/2+j)] <<= 8;
-            aux_voltage[i][(k/2+j)] |= this->read_buff[i*8+ k];
+            this->aux_value[i][(k/2+j)] = this->read_buff[i*8+ k+1];
+            this->aux_value[i][(k/2+j)] <<= 8;
+            this->aux_value[i][(k/2+j)] |= this->read_buff[i*8+ k];
         }
     }
     j+= 2;
@@ -545,11 +543,10 @@ uint16_t ** ADBMS1818::read_aux_adc(){
     this->u16_to_u8(command, command2);
     this->read_command(command2, this->read_buff);
     for(int i=0;i<this->n;i++){
-        aux_voltage[i][j] = this->read_buff[i*8+1];
-        aux_voltage[i][j] <<= 8;
-        aux_voltage[i][j] |= this->read_buff[i*8];
+        this->aux_value[i][j] = this->read_buff[i*8+1];
+        this->aux_value[i][j] <<= 8;
+        this->aux_value[i][j] |= this->read_buff[i*8];
     }
-    return aux_voltage;
 }
 
 float ADBMS1818::convert_voltage(uint16_t voltage){

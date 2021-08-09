@@ -33,42 +33,28 @@ void ADBMS1818Class::start_all_conversions(){
 }
 
 bool ADBMS1818Class::cell_detect(){
-    uint16_t **cell_voltage;
-    cell_voltage = new uint16_t* [this->n];
     this->adbms_status = COMM_ACTIVE;
     for(uint8_t i=0; i<this->n;i++){
-        cell_voltage[i] = new uint16_t [18];
-        for(uint8_t j=0;j<18;j++){
-            cell_voltage[i][j] = 0;
-        }
         this->cell_qnt[i]  = 0;
     }
     this->tot_cell_qnt = 0;
     this->start_cv_sc_conversion();
-    cell_voltage = this->read_cv_adc();
+    this->read_cv_adc();
     for(uint8_t i=0; i<this->n; i++){
         uint8_t j = 0;
-        while(j<18&&(this->convert_voltage(cell_voltage[i][j])*1000.0)>=this->vcell_min_exist){
+        while(j<18&&(this->convert_voltage(this->cells_value[i][j])*1000.0)>=this->vcell_min_exist){
             j++;
         }
         this->cell_qnt[i] = j;
         this->tot_cell_qnt += j;
         while(j<18){
-            if(this->convert_voltage(cell_voltage[i][j])*1000.0 >= this->vcell_min_exist){
+            if(this->convert_voltage(this->cells_value[i][j])*1000.0 >= this->vcell_min_exist){
                 this->adbms_status = COMM_STOPPED;
-                for(uint8_t i=0; i<this->n;i++){
-                    delete[] cell_voltage[i];
-                }
-                delete[] cell_voltage;
                 return false;
             }
             j++;
         }
     }
-    for(uint8_t i=0; i<this->n;i++){
-                    delete[] cell_voltage[i];
-                }
-    delete[] cell_voltage;
     return true;
 }
 
@@ -87,25 +73,14 @@ uint8_t ADBMS1818Class::get_status(){
 float ADBMS1818Class::get_sum_cell_voltage(){
     this->start_cv_sc_conversion();
     if(this->pladc_rdy()){
-        uint16_t **cell_voltage;
-        cell_voltage = new uint16_t* [this->n];
-        for(uint8_t i=0; i<this->n;i++){
-            cell_voltage[i] = new uint16_t [18];
-            for(uint8_t j=0;j<18;j++){
-                cell_voltage[i][j] = 0;
-            }
-        }
-        cell_voltage = this->read_cv_adc();
+        
+        this->read_cv_adc();
         float voltage_sum = 0;
         for(uint8_t i=0; i<this->n; i++){
             for(uint8_t j=0; j<this->cell_qnt[i]; j++){
-                voltage_sum += this->convert_voltage(cell_voltage[i][j]);
+                voltage_sum += this->convert_voltage(this->cells_value[i][j]);
             }
         }
-        for(uint8_t i=0; i< this->n;i++){
-            delete[] cell_voltage[i];
-        }
-        delete[] cell_voltage;
         return voltage_sum;
     }else{
         return 0;

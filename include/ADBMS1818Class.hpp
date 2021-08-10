@@ -22,12 +22,12 @@ public:
         cell_qnt = new uint8_t[n];
         adbms_status = COMM_ACTIVE;
     }
-    void start_all_conversions();
-    void start_cell_ballancing(uint8_t value = 1);
-    bool cell_detect();
+    void     start_all_conversions();
+    void     start_cell_ballancing(uint8_t value = 1);
+    bool     cell_detect();
     uint32_t get_tot_cell_qnt();
-    float get_sum_cell_voltage();
-    uint8_t * get_cell_qnt();
-    uint8_t get_status();
-    int voltage_percent(float voltage_value);
+    float    get_sum_cell_voltage();
+    uint8_t  get_cell_qnt(uint8_t id);
+    uint8_t  get_status();
+    int      voltage_percent(float voltage_value);
 };

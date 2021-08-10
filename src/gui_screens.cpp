@@ -732,7 +732,7 @@ namespace gui{
 
     void adbms_data_scr_read(lv_timer_t *timer){
         adbms.cell_detect();
-        uint8_t *cells_qnt = adbms.get_cell_qnt();
+        cells_qnt = adbms.get_cell_qnt(current_adbms);
         tot_cell_qnt = adbms.get_tot_cell_qnt();
         sum_cell_volt = adbms.get_sum_cell_voltage();
         if(ina.device_found()){
@@ -740,38 +740,37 @@ namespace gui{
         }else{
             temperature = 0;
         }
-        uint8_t k = cells_qnt[current_adbms];
-        for(uint8_t i=0; i<k;i++){
+        for(uint8_t i=0; i<cells_qnt;i++){
             lv_label_set_text_fmt(label_cells_voltage[i], "C%u: %.3f", (i+1), adbms.convert_voltage(adbms(current_adbms, i) ));
         }
-        for(uint8_t i=k; i<18;i++){
+        for(uint8_t i=cells_qnt; i<18;i++){
             lv_label_set_text_fmt(label_cells_voltage[i], "C%u 0.000", (i+1));
         }
         lv_label_set_text_fmt(label_info_cont, "%u-s Battery detected %.1fV %d°c", tot_cell_qnt, sum_cell_volt, temperature);
-        delete cells_qnt;
+        
     }
 
     void adbms_data_candles_scr_read(lv_timer_t *timer){
         adbms.cell_detect();
-        uint8_t *cells_qnt = adbms.get_cell_qnt();
+        cells_qnt = adbms.get_cell_qnt(current_adbms);
         tot_cell_qnt = adbms.get_tot_cell_qnt();
         sum_cell_volt = adbms.get_sum_cell_voltage();
-        uint8_t k = cells_qnt[current_adbms];
+        
         if(ina.device_found()){
             temperature = (int)ina.read_temperature();
         }else{
             temperature = 0;
         }
-        for(uint8_t i=0; i<k;i++){
+        for(uint8_t i=0; i<cells_qnt;i++){
             lv_label_set_text_fmt(label_cells_voltage[i],  "%.3f", adbms.convert_voltage(adbms(current_adbms, i)));
             lv_bar_set_value(bars_cells_voltage[i], adbms.voltage_percent(adbms.convert_voltage(adbms(current_adbms, i))), LV_ANIM_ON);
         }
-        for(uint8_t i=k; i<18;i++){
+        for(uint8_t i=cells_qnt; i<18;i++){
             lv_label_set_text(label_cells_voltage[i], "0.000");
             lv_bar_set_value(bars_cells_voltage[i], 0, LV_ANIM_OFF);
         }
         lv_label_set_text_fmt(label_info_cont, "%u-s Battery detected %.1fV %d°c", tot_cell_qnt, sum_cell_volt, temperature);
-        delete cells_qnt;
+        
     }
 
     void adbms_data_graph_scr_read(lv_timer_t *timer){

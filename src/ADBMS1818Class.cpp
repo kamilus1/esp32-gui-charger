@@ -62,8 +62,8 @@ uint32_t ADBMS1818Class::get_tot_cell_qnt(){
     return this->tot_cell_qnt;
 }
 
-uint8_t* ADBMS1818Class::get_cell_qnt(){
-    return this->cell_qnt;
+uint8_t ADBMS1818Class::get_cell_qnt(uint8_t id){
+    return (id >= this->n)? this->cell_qnt[0]: this->cell_qnt[id];
 }
 
 uint8_t ADBMS1818Class::get_status(){

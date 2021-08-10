@@ -17,6 +17,7 @@ namespace gui{
     static uint8_t state;
     //energy and cells relate variable
     static uint32_t tot_cell_qnt;
+    static uint8_t cells_qnt;
     static float sum_cell_volt;
     static int temperature;
     static float input_voltage;

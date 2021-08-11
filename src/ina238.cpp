@@ -45,15 +45,13 @@ void ina238::write_command(uint8_t *data, uint8_t qnt){
     i2c_wire->endTransmission();
 }
 
-uint8_t *ina238::read_command(uint8_t *data, uint8_t wqnt, uint8_t rqnt){
-    uint8_t *read_data = new uint8_t[rqnt];
+void ina238::read_command(uint8_t *data, uint8_t wqnt, uint8_t rqnt){
     this->write_command(data, wqnt);
     i2c_wire->requestFrom(this->ina_addr, rqnt);
     for(uint8_t i=0;i<rqnt;i++){
         while(!i2c_wire->available());
-        read_data[i] = i2c_wire->read();
+        this->read_data[i] = i2c_wire->read();
     }
-    return read_data;
 }
 
 void ina238::write_config1(uint8_t rst, uint8_t convdly, uint8_t adcrange){
@@ -98,10 +96,10 @@ void ina238::write_currlsbcalc_3(uint16_t currlsb){
 
 float ina238::read_current(){
     this->write_data[0] = this->registers["CURRENT"];
-    uint8_t *data = this->read_command(this->write_data, 1, 2);
-    uint16_t curr = data[0];
+    this->read_command(this->write_data, 1, 2);
+    uint16_t curr = this->read_data[0];
     curr <<= 8;
-    curr |= data[1];
+    curr |= this->read_data[1];
     float curr_lsb = this->curr_lsb_calc;
     curr_lsb = this->adc_range == true? curr_lsb*4: curr_lsb;
     return ((float)curr) * curr_lsb;
@@ -109,10 +107,10 @@ float ina238::read_current(){
 
 float ina238::read_temperature(){
     this->write_data[0] = this->registers["DIETEMP"];
-    uint8_t *data = this->read_command(this->write_data, 1, 2);
-    uint16_t temp_buffer = data[0];
+    this->read_command(this->write_data, 1, 2);
+    uint16_t temp_buffer = this->read_data[0];
     temp_buffer <<= 4;
-    temp_buffer |= (data[1] >> 4);
+    temp_buffer |= (this->read_data[1] >> 4);
     float temp = 0.125;
     temp *= temp_buffer;
     return temp;
@@ -120,10 +118,10 @@ float ina238::read_temperature(){
 
 float ina238::read_voltage(){
     this->write_data[0] = this->registers["VBUS"];
-    uint8_t *data = this->read_command(this->write_data, 1, 2);
-    uint16_t volt_buffer = data[0];
+    this->read_command(this->write_data, 1, 2);
+    uint16_t volt_buffer = this->read_data[0];
     volt_buffer <<= 8;
-    volt_buffer |= data[1];
+    volt_buffer |= this->read_data[1];
     float voltage = 0.003125;
     voltage *= volt_buffer;
     return voltage;

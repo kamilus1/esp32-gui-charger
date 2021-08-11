@@ -7,6 +7,7 @@ class ina238{
     uint16_t ina_addr;
     float curr_lsb_calc;
     uint8_t write_data [4];
+    uint8_t read_data [4];
     bool adc_range;
     float r;
 
@@ -17,7 +18,7 @@ class ina238{
         void begin();
         bool device_found();
         void write_command(uint8_t *data, uint8_t qnt);
-        uint8_t *read_command(uint8_t *data, uint8_t wqnt, uint8_t rqnt);
+        void read_command(uint8_t *data, uint8_t wqnt, uint8_t rqnt);
         void write_config1(uint8_t rst = 0, uint8_t convdly = 1, uint8_t adcrange = 1);
         void write_adc_config2(uint8_t mode = 0xf, uint8_t vcvbust = 0x2, uint8_t vshct = 0x2, uint8_t vtct = 0x2, uint8_t avg = 0x0);
         void write_currlsbcalc_3(uint16_t currlsb = 30);

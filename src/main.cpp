@@ -1,5 +1,5 @@
 #include "main.hpp"
-TaskHandle_t Task1;
+
 //uart variables and function prototypes
 static QueueHandle_t uart0_queue;
 static const char * TAG = "";      
@@ -38,13 +38,7 @@ void my_touchpad_read(lv_indev_drv_t * drv, lv_indev_data_t*data);
 uint16_t touchX, touchY;
 
 
-void gui_loop_code(void *pvParameters){
-  
-  for(;;){
-    lv_timer_handler();
-    delay(5);
-  }
-}
+
 
 
 void setup() {
@@ -118,21 +112,15 @@ void setup() {
     //start cell ballancing
     adbms.start_cell_ballancing();
     //setup core 0 task
-    xTaskCreatePinnedToCore(gui_loop_code, 
-          "GUI Loop", 
-          15000, 
-          NULL, 
-          1, 
-          &Task1, 
-          0
-    );
+    
 }
 
 
 
 
 void loop() {
-    
+    lv_timer_handler();
+    delay(5);
 }
 
 

@@ -3,13 +3,16 @@
 #include "ADBMS1818Class.hpp"
 #include <lvgl.h>
 #include <map>
+#include <string.h>
+#include <functional>
 
 namespace huart{
     lv_timer_t *transmitting_task;
-    bool is_transmiting;
-    const char *commands_list[7] {"gd", "sd", "st", "str", "shp", "sp", "ht"};
+    static bool is_transmiting;
+    static std::map<char*, std::function<void()>> commands_list;
 
     void init_tasks();
     void start_transmitting();
-
+    static void transmit_data(lv_timer_t *timer);
+    void interpret_command(char *command);
 };

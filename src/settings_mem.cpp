@@ -4,10 +4,11 @@
 const std::map<std::string, std::pair<uint8_t, uint8_t>> MemManager::memory_map = {
     {"FIRST", {0, 1}},
     {"ADBMS_QNT", {1, 1}},
-
+    {"VOV", {2, 4}},
+    {"VUV", {6, 4}}
 };
 
-const uint16_t MemManager::mem_size = 32;
+const uint16_t MemManager::mem_size = 64;
 
 
 MemManager::MemManager(){

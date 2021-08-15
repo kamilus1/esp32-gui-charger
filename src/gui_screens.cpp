@@ -254,6 +254,7 @@ namespace gui{
             load_transition();
             init_start_screen();
             load_current();
+            lv_timer_set_cb(adbms_read, adbms_start_scr_read);
         }else{
             lv_msgbox_close(obj);
         }

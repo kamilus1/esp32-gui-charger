@@ -7,16 +7,11 @@ static const char * TAG = "";
 static void UART_ISR_ROUTINE(void *pvParameters);
 
 
-//pwm variables
-const int freq = 10000; //10 khz
-const int pwm_channel = 0;
-const int resolution = 12; //12 bit resolution
 //gui variables
 
 TFT_eSPI tft = TFT_eSPI();
 
-//pwm pins
-const int8_t pwm_pins[3] = {25, 26, 27};
+
 //adbms pins and object
 int8_t adbms_pins[4] = {18,19,23,CS};//tab for custom SPI Pins. sck, miso, mosi, cs is a pin order. In this tab i use HSPI port SPI pins
 ADBMS1818Class adbms = ADBMS1818Class(adbms_pins); //constructor with modified pins
@@ -26,6 +21,9 @@ ADBMS1818Class adbms = ADBMS1818Class(adbms_pins); //constructor with modified p
 //address depends on signals attached to A0 and A1 pins of ina238. 
 //https://www.ti.com/lit/ds/symlink/ina238-q1.pdf?ts=1623446444912#page=15
 ina238 ina((uint16_t)INA238_ADDR);
+
+//eeprom mem manager class
+MemManager mem_manager = MemManager();
 //lvgt gui vars
 static const uint32_t screenWidth  = 320;
 static const uint32_t screenHeight = 240;
@@ -42,7 +40,10 @@ uint16_t touchX, touchY;
 
 
 void setup() {
-  
+  //configure memory
+  if(mem_manager.firstUse()){
+    mem_manager.setDefaultSettings();
+  }
   //configuring UART interrupts 
   uart_config_t uart_0_config = {
     .baud_rate = BAUD_RATE, 
@@ -57,13 +58,10 @@ void setup() {
   uart_driver_install(UART_NUM_0, BUF_SIZE, BUF_SIZE, 20, &uart0_queue, 0);
   
   xTaskCreate(UART_ISR_ROUTINE, "UART_ISR_ROUTINE", 2048, NULL, 12, NULL);
-  //setup PWM
-  ledcSetup(pwm_channel, freq, resolution);
-  for(uint8_t i=0; i<3;i++){
-    ledcAttachPin(pwm_pins[i], pwm_channel);
-  }
+
   ina.begin();
   pinMode(CS, OUTPUT);
+  adbms.set_adbms_qnt(mem_manager.getADBMSQuantity());
   adbms.begin();
   adbms.set_config_reg_a();
   adbms.set_config_reg_b();
@@ -96,7 +94,13 @@ void setup() {
    indev_drv.type = LV_INDEV_TYPE_POINTER;
    indev_drv.read_cb = my_touchpad_read;
    lv_indev_drv_register( &indev_drv );
+   
 
+   //initialize pwm 
+
+   pwmproc::init_pwm();
+  //initialize terminal tasks
+  huart::init_tasks();
     
      //Initialize styles
     gui::init_styles();
@@ -169,13 +173,9 @@ static void UART_ISR_ROUTINE(void *pvParameters){
         ESP_ERROR_CHECK(uart_get_buffered_data_len(UART_NUM_0, (size_t*)&UART0_data_length));
         UART0_data_length = uart_read_bytes(UART_NUM_0, UART0_data, UART0_data_length, 100);
         UART0_data_length -= 2;
-        char command[UART0_data_length];
-        for(int i=0; i<UART0_data_length; i++){
-          command[i] = (char) UART0_data[i];
-        }
-        char data[12];
-        sprintf(data, "%d\r\n", UART0_data_length);
-        uart_write_bytes(UART_NUM_0, data, strlen(data));
+        char command[UART0_data_length+1];
+        strncpy(command, (char *)UART0_data, UART0_data_length);
+        huart::interpret_command(command);
       }
     }
   }

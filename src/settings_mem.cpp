@@ -5,7 +5,15 @@ const std::map<std::string, std::pair<uint8_t, uint8_t>> MemManager::memory_map 
     {"FIRST", {0, 1}},
     {"ADBMS_QNT", {1, 1}},
     {"VOV", {2, 4}},
-    {"VUV", {6, 4}}
+    {"VUV", {6, 4}}, 
+    {"CHG_CURR", {10, 4}}, 
+    {"DISCHG_CURR", {14, 4}},
+    {"CHG_VOLT", {18, 4}},
+    {"STORE_VOLT", {22, 4}},
+    {"CUT_VOLT", {26, 4}},
+    {"CUT_TEMP", {30, 1}},
+    {"SAFETY_TIMER", {31, 2}},
+    {"REST_TIME", {33, 2}}
 };
 
 const uint16_t MemManager::mem_size = 64;
@@ -16,15 +24,13 @@ MemManager::MemManager(){
 }
 
 bool MemManager::firstUse(){
-    return EEPROM.read(std::get<0>(this->memory_map.at("FIRST")));
+    return EEPROM.read(std::get<0>(this->memory_map.at("FIRST"))) != 7;
 }
 
-uint8_t * MemManager::read(uint8_t addr, uint16_t len){
-    uint8_t *buffer = new uint8_t [len];
+void MemManager::read(uint8_t addr, uint8_t *dst, uint16_t len){
     for(uint16_t i=0; i<len;i++){
-        buffer[i] = EEPROM.read((addr + i));
+        dst[i] = EEPROM.read((addr + i));
     }
-    return buffer;
 }
 
 void MemManager::write(uint8_t addr, uint8_t *data, uint16_t len){
@@ -39,10 +45,119 @@ void MemManager::clear(){
 }
 
 uint8_t MemManager::getADBMSQuantity(){
+    this->read(std::get<0>(this->memory_map.at("ADBMS_QNT")), &this->adbms_quantity, std::get<1>(this->memory_map.at("ADBMS_QNT")));
     return this->adbms_quantity;
+}
+
+float MemManager::getVOV(){
+    this->read(std::get<0>(this->memory_map.at("VOV")), this->vov.value_bytes, std::get<1>(this->memory_map.at("VOV")));
+    return this->vov.value;
+}
+float MemManager::getVUV(){
+    this->read(std::get<0>(this->memory_map.at("VUV")), this->vuv.value_bytes, std::get<1>(this->memory_map.at("VUV")));
+    return this->vuv.value;
+}
+float MemManager::getChgCurr(){
+    this->read(std::get<0>(this->memory_map.at("CHG_CURR")), this->chg_curr.value_bytes, std::get<1>(this->memory_map.at("CHG_CURR")));
+    return this->chg_curr.value;
+}
+float MemManager::getDischgCurr(){
+    this->read(std::get<0>(this->memory_map.at("DISCHG_CURR")), this->dischg_curr.value_bytes, std::get<1>(this->memory_map.at("DISCHG_CURR")));
+    return this->dischg_curr.value;
+}
+
+float MemManager::getChgVolt(){
+    this->read(std::get<0>(this->memory_map.at("CHG_VOLT")), this->chg_volt.value_bytes, std::get<1>(this->memory_map.at("CHG_VOLT")));
+    return this->chg_volt.value;
+}
+
+float MemManager::getStoreVolt(){
+    this->read(std::get<0>(this->memory_map.at("STORE_VOLT")), this->store_volt.value_bytes, std::get<1>(this->memory_map.at("STORE_VOLT")));
+    return this->store_volt.value;
+}
+float MemManager::getCutVolt(){
+    this->read(std::get<0>(this->memory_map.at("CUT_VOLT")), this->cut_volt.value_bytes, std::get<1>(this->memory_map.at("CUT_VOLT")));
+    return this->cut_volt.value;
+}
+uint8_t MemManager::getCutTemp(){
+    this->read(std::get<0>(this->memory_map.at("CUT_TEMP")), &this->cut_temp, std::get<1>(this->memory_map.at("CUT_TEMP")));
+    return this->cut_temp;
+}
+uint16_t MemManager::getSafetyTimer(){
+    this->read(std::get<0>(this->memory_map.at("SAFETY_TIMER")), this->safety_timer.value_bytes, std::get<1>(this->memory_map.at("SAFETY_TIMER")));
+    return this->safety_timer.value;
+}
+
+uint16_t MemManager::getRestTime(){
+    this->read(std::get<0>(this->memory_map.at("REST_TIME")), this->rest_time.value_bytes, std::get<1>(this->memory_map.at("REST_TIME")));
+    return this->rest_time.value;
 }
 
 void MemManager::setADBMSQuantity(uint8_t data){
     this->adbms_quantity = data;
     this->write(std::get<0>(this->memory_map.at("ADBMS_QNT")), &this->adbms_quantity, std::get<1>(this->memory_map.at("ADBMS_QNT")));
+}
+
+void MemManager::setVOV(float data){
+    this->vov.value = data;
+    this->write(std::get<0>(this->memory_map.at("VOV")), this->vov.value_bytes, std::get<1>(this->memory_map.at("VOV")));
+}
+void MemManager::setVUV(float data){
+    this->vuv.value = data;
+    this->write(std::get<0>(this->memory_map.at("VUV")), this->vuv.value_bytes, std::get<1>(this->memory_map.at("VUV")));
+}
+
+void MemManager::setChgCurr(float curr){
+    this->chg_curr.value = curr;
+    this->write(std::get<0>(this->memory_map.at("CHG_CURR")), this->chg_curr.value_bytes, std::get<1>(this->memory_map.at("CHG_CURR")));
+}
+
+void MemManager::setDischgCurr(float curr){
+    this->dischg_curr.value = curr;
+    this->write(std::get<0>(this->memory_map.at("DISCHG_CURR")), this->dischg_curr.value_bytes, std::get<1>(this->memory_map.at("DISCHG_CURR")));
+}
+
+void MemManager::setChgVolt(float voltage){
+    this->chg_volt.value = voltage;
+    this->write(std::get<0>(this->memory_map.at("CHG_VOLT")), this->chg_volt.value_bytes, std::get<1>(this->memory_map.at("CHG_VOLT")));
+}
+
+void MemManager::setStoreVolt(float voltage){
+    this->store_volt.value = voltage;
+    this->write(std::get<0>(this->memory_map.at("STORE_VOLT")), this->store_volt.value_bytes, std::get<1>(this->memory_map.at("STORE_VOLT")));
+}
+
+void MemManager::setCutVolt(float voltage){
+    this->cut_volt.value = voltage;
+    this->write(std::get<0>(this->memory_map.at("CUT_VOLT")), this->cut_volt.value_bytes, std::get<1>(this->memory_map.at("CUT_VOLT")));
+}
+
+void MemManager::setCutTemp(uint8_t temp){
+    this->cut_temp = temp;
+    this->write(std::get<0>(this->memory_map.at("CUT_TEMP")), &this->cut_temp, std::get<1>(this->memory_map.at("CUT_TEMP")));
+}
+
+void MemManager::setSafetyTimer(uint16_t timestamp){
+    this->safety_timer.value = timestamp;
+    this->write(std::get<0>(this->memory_map.at("SAFETY_TIMER")), this->safety_timer.value_bytes, std::get<1>(this->memory_map.at("SAFETY_TIMER")));
+}
+
+void MemManager::setRestTime(uint16_t timestamp){
+    this->rest_time.value = timestamp;
+    this->write(std::get<0>(this->memory_map.at("REST_TIME")), this->rest_time.value_bytes, std::get<1>(this->memory_map.at("REST_TIME")));
+}
+
+void MemManager::setDefaultSettings(){
+    uint8_t val = 7;
+    this->write(std::get<0>(this->memory_map.at("FIRST")), &val, std::get<1>(this->memory_map.at("FIRST")));
+    this->setVOV(4.25);
+    this->setVUV(1.0);
+    this->setChgCurr(10.0);
+    this->setDischgCurr(2.5);
+    this->setChgVolt(25.0);
+    this->setStoreVolt(4.0);
+    this->setCutVolt(2.55);
+    this->setCutTemp(45);
+    this->setSafetyTimer(240);
+    this->setRestTime(5);
 }

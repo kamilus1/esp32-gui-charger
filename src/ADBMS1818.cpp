@@ -130,7 +130,7 @@ void ADBMS1818::pec_15(uint8_t *tab, uint8_t len){
     this->u16_to_u8(pec_bytes, this->pec);
 }
 
-void ADBMS1818::set_device_count(uint8_t n){
+void ADBMS1818::set_adbms_qnt(uint8_t n){
     this->n = n;
     delete[] this->write_buff;
     delete[] this->read_buff;

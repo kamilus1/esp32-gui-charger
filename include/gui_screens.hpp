@@ -2,6 +2,9 @@
 #include "user_defines.h"
 #include "ADBMS1818Class.hpp"
 #include "ina238.hpp"
+#include "pwm_procedures.hpp"
+#include "settings_mem.hpp"
+#include "lm35.hpp"
 #include <vector>
 #include <cstring>
 
@@ -12,7 +15,8 @@ namespace gui{
     2 -> process screen
     3 -> during process screen
     4 -> data screen
-    5 -> settings screen
+    5 -> start settings screen
+    6 -> misc or battery settings screen
     */
     static uint8_t state;
     //energy and cells relate variable
@@ -38,6 +42,8 @@ namespace gui{
         };
     static lv_style_t main_buttons_pr_styles[6];
     static lv_style_t main_buttons_styles[6];
+    static lv_style_t black_button_style;
+    static lv_style_t black_button_pr_style;
     static lv_style_t main_screen_style;
     static lv_style_t process_label_style;
     static lv_style_t info_cont_style;
@@ -65,8 +71,9 @@ namespace gui{
 
 
     //event handlers
-    static void conversion_handler(lv_event_t *e);
-    static void total_cells_handler(lv_event_t *e);
+    static void settings_scr_switch_handler(lv_event_t *e);
+    static void battery_set_scr_switch_handler(lv_event_t *e);
+    static void misc_set_scr_switch_handler(lv_event_t *e);
     static void charge_scr_switch_handler(lv_event_t *e);
     static void store_scr_switch_handler(lv_event_t *e);
     static void disch_scr_switch_handler(lv_event_t *e);
@@ -93,11 +100,22 @@ namespace gui{
     static lv_obj_t *label_cells_voltage[18];
     static lv_obj_t *bars_cells_voltage[18];
     static lv_obj_t *label_special_symbol;
-    void init_demo_screen();
     void init_start_screen();
     //process screens
     void init_process_screen(uint8_t process_type = CHARGE_PROCESS);
     void init_start_process_screen(uint8_t process_type = CHARGE_PROCESS);
+
+    void init_chg_process_screen();
+    void init_start_chg_process_screen();
+
+    void init_dischg_process_screen();
+    void init_start_dischg_process_screen();
+
+    void init_cycle_process_screen();
+    void init_start_cycle_process_screen();
+
+    void init_store_process_screen();
+    void init_start_store_process_screen();
     //data screens
     void init_data_list_screen();
     void init_data_candles_screen();
@@ -114,12 +132,13 @@ namespace gui{
     //tasks
     static lv_timer_t *adbms_read;
     static lv_timer_t *process_task;
-
+    
     void adbms_start_scr_read(lv_timer_t *timer);
     void adbms_data_scr_read(lv_timer_t *timer);
     void adbms_data_candles_scr_read(lv_timer_t *timer);
     void adbms_data_graph_scr_read(lv_timer_t *timer);
     void adbms_process_scr_read(lv_timer_t *timer);
+    void adbms_start_process_scr_read(lv_timer_t *timer);
     void adbms_settings_scr_read(lv_timer_t *timer);
 
     void process_charge(lv_timer_t *timer);

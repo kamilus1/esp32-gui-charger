@@ -2,9 +2,12 @@
 extern ADBMS1818Class adbms;
 extern ina238 ina;
 extern MemManager mem_manager;
+extern LM35 lm35;
 
 namespace gui{
     void init_styles(){
+        dV_max = 0;
+        safety_timer = 0;
         state = 1;
         tot_cell_qnt = 0;
         sum_cell_volt = 0.0;
@@ -14,6 +17,8 @@ namespace gui{
         process_type_selected = 0;
         data_type_selected = 0;
         current_adbms = 0;
+        current_curr = 0;
+        charge_state = 0;
         init_main_scr_style();
         init_main_btn_style();
         init_main_btn_pr_style();
@@ -270,17 +275,17 @@ namespace gui{
             state = 3;
             uint8_t *process_type = (uint8_t *) lv_event_get_user_data(e);
             switch(*process_type){
-                case 0:
-
+                case CHARGE_PROCESS:
+                    process_task = lv_timer_create(process_charge, PROCESS_READ_PERIOD, NULL);
                 break;
-                case 1:
-
+                case STORE_PROCESS:
+                    process_task = lv_timer_create(process_store, PROCESS_READ_PERIOD, NULL);
                 break;
-                case 2:
-
+                case DISCHARGE_PROCESS:
+                    process_task = lv_timer_create(process_discharge, PROCESS_READ_PERIOD, NULL);
                 break;
-                case 3:
-
+                case CYCLE_PROCESS :
+                    process_task = lv_timer_create(process_cycle, PROCESS_READ_PERIOD, NULL);
                 break;
                 default:
                 break;
@@ -312,6 +317,7 @@ namespace gui{
             load_transition();
             init_start_screen();
             load_current();
+            lv_timer_del(process_task);
             lv_timer_set_cb(adbms_read, adbms_start_scr_read);
         }else{
             lv_msgbox_close(obj);
@@ -464,35 +470,48 @@ namespace gui{
     }
 
     void init_process_screen(uint8_t process_type){
-        std::vector<std::string> process = {"CHARGE", "STORE", "DISCHG", "CYCLE"};
-        std::vector<std::string> process_info = {"CURRENT", "CUT TEMP", "MAX.CAPACITY", "SAFETY TIMER", "BALANCE dVmin"};
-        process_type_selected = process_type;
         curr_scr = lv_obj_create(NULL);
         lv_obj_add_style(curr_scr, &main_screen_style, LV_STATE_DEFAULT );
-        static lv_coord_t col_dsc[] = {70, 70, 70, 70,  LV_GRID_TEMPLATE_LAST};
-        static lv_coord_t row_dsc[] = {25, 25, 25, 25, 25, 25, 25,  LV_GRID_TEMPLATE_LAST};
         lv_obj_t *cont = lv_obj_create(curr_scr);
-        init_grid(cont, col_dsc, row_dsc);
+        uint8_t rows, cols;
+        cols = 3;
+        switch(process_type){
+            case CHARGE_PROCESS:
+                init_chg_process_screen(cont);
+                rows = 6;
+            break;
+            case STORE_PROCESS:
+                init_store_process_screen(cont);
+                rows = 5;
+            break;
+            case DISCHARGE_PROCESS:
+                init_dischg_process_screen(cont);
+                rows = 4;
+            break;
+            case CYCLE_PROCESS:
+                init_cycle_process_screen(cont);
+                rows = 6;
+            break;
+            default:
+            break;
+        }
+        std::vector<std::string> process = {"CHARGE", "STORE", "DISCHG", "CYCLE"};
+        
+        process_type_selected = process_type;
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
         //info container
-        lv_obj_t *info_cont = lv_obj_create(cont);
-        lv_obj_remove_style_all(info_cont);
-        init_cont(info_cont, &info_cont_style, 0, 0, 4);
-        //info cont label
-        label_info_cont = lv_label_create(info_cont);
-        lv_obj_set_style_text_font(label_info_cont, &lv_font_montserrat_16, LV_STATE_DEFAULT);
-        lv_label_set_text(label_info_cont, "0-S BAT DETECTED 0.0V 0°C");
+        init_info_label(cont, label_info_cont, &info_cont_style, (cols+1));
         
         lv_obj_t *back_btn = lv_btn_create(cont);
         lv_obj_t *start_btn = lv_btn_create(cont);
-        init_button(back_btn, &main_buttons_styles[2], &main_buttons_pr_styles[2], 0, 6);
-        init_button(start_btn, &main_buttons_styles[0], &main_buttons_pr_styles[0], 3, 6);
+        init_button(back_btn, &main_buttons_styles[2], &main_buttons_pr_styles[2], 0, rows);
+        init_button(start_btn, &main_buttons_styles[0], &main_buttons_pr_styles[0], 3, rows);
         lv_obj_add_event_cb(back_btn, process_back_handler, LV_EVENT_CLICKED, NULL);
         lv_obj_add_event_cb(start_btn, process_start_switch_handler, LV_EVENT_CLICKED, &process_type_selected);
 
         lv_obj_t *process_cont = lv_obj_create(cont);
         lv_obj_remove_style_all(process_cont);
-        init_cont(process_cont, &process_label_style, 2, 6);
+        init_cont(process_cont, &process_label_style, 2, rows);
         
         lv_obj_t *label_back_btn = lv_label_create(back_btn);
         lv_obj_t *label_start_btn = lv_label_create(start_btn);
@@ -508,6 +527,19 @@ namespace gui{
         lv_obj_center(label_process);
     }
     void init_start_process_screen(uint8_t process_type){
+        switch(process_type){
+            case CHARGE_PROCESS:
+            
+            break;
+            case STORE_PROCESS:
+            break;
+            case DISCHARGE_PROCESS:
+            break;
+            case CYCLE_PROCESS:
+            break;
+            default:
+            break;
+        }
         std::vector<std::string> process = {"CHARGING IN PROGRESS", "STORING IN PROGRESS", 
         "DISCHARGING IN PROGRESS", "CYCLING IN PROGRESS"};
         
@@ -519,13 +551,7 @@ namespace gui{
         init_grid(cont, col_dsc, row_dsc);
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
         //info container
-        lv_obj_t *info_cont = lv_obj_create(cont);
-        lv_obj_remove_style_all(info_cont);
-        init_cont(info_cont, &info_cont_style, 0, 0, 5);
-        //info cont label
-        label_info_cont = lv_label_create(info_cont);
-        lv_obj_set_style_text_font(label_info_cont, &lv_font_montserrat_16, LV_STATE_DEFAULT);
-        lv_label_set_text(label_info_cont, "0-S BAT DETECTED 0.0V 0°C");
+        init_info_label(cont, label_info_cont, &info_cont_style, 5);
         //buttons
         lv_obj_t *stop_btn = lv_btn_create(cont);
         lv_obj_t *data_btn = lv_btn_create(cont);
@@ -550,35 +576,187 @@ namespace gui{
         lv_obj_center(label_stop);
         lv_obj_center(label_data);
     }
-    void init_chg_process_screen(){
-        curr_scr = lv_obj_create(NULL);
-        lv_obj_add_style(curr_scr, &main_screen_style, LV_STATE_DEFAULT );
+    void init_chg_process_screen(lv_obj_t *cont){
+        const char * process_settings[5] = {"CURRENT", "VOLTAGE", "DV MIN", "CUT TEMP",  "SAFETY TIMER"};
         static lv_coord_t col_dsc[] = {70, 70, 70, 70,  LV_GRID_TEMPLATE_LAST};
-        static lv_coord_t row_dsc[] = {25, 25, 25, 25, 25, 25, 25,  LV_GRID_TEMPLATE_LAST};
-        
+        static lv_coord_t row_dsc[] = {25, 25, 25, 25, 25, 25, 30,  LV_GRID_TEMPLATE_LAST};
+        init_grid(cont, col_dsc, row_dsc);
+        lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
+        uint8_t max_capacity = 100;
+        uint8_t settings_cnt = 5;
+        //conts
+        //settings label conts
+        lv_obj_t *settings_label_conts[settings_cnt];
+        for(uint8_t i=0;i<settings_cnt;i++){
+            settings_label_conts[i] = lv_obj_create(cont);
+            init_cont(settings_label_conts[i], &basic_label_style, 0, (i+1), 2);
+        }
+        //buttons
+        //settings buttons
+        lv_obj_t *settings_buttons[settings_cnt];
+        for(uint8_t i=0;i<settings_cnt;i++){
+            settings_buttons[i] = lv_btn_create(cont);
+            init_button(settings_buttons[i], &black_button_style, &black_button_pr_style, 2, (i+1), 2);
+        }
+        //labels
+        //settings info  labels
+        lv_obj_t *settings_labels[settings_cnt];
+        for(uint8_t i=0; i<settings_cnt;i++){
+            settings_labels[i] = lv_label_create(settings_label_conts[i]);
+            lv_label_set_text_fmt(settings_labels[i], "%s", process_settings[i]);
+            lv_obj_align(settings_labels[i], LV_ALIGN_LEFT_MID, 0 , 0);
+        }
+        //settings btn labels
+        lv_obj_t *settings_btn_labels[settings_cnt];
+        for(uint8_t i=0;i<settings_cnt;i++){
+            settings_btn_labels[i] = lv_label_create(settings_buttons[i]);
+            lv_obj_align(settings_btn_labels[i], LV_ALIGN_RIGHT_MID, 0 ,0);
+        }
+        lv_label_set_text_fmt(settings_btn_labels[0], "%.1f", mem_manager.getChgCurr());
+        lv_label_set_text_fmt(settings_btn_labels[1], "%.3f", mem_manager.getChgVolt());
+        lv_label_set_text_fmt(settings_btn_labels[2], "%u", mem_manager.getdVMin());
+        lv_label_set_text_fmt(settings_btn_labels[3], "%u", mem_manager.getCutTemp());
+        lv_label_set_text_fmt(settings_btn_labels[4], "%u", mem_manager.getSafetyTimer());
     }
 
-    void init_start_chg_process_screen(){
+    void init_start_chg_process_screen(lv_obj_t *cont){
+        const char* process_values[4] = {"BAT TEMP", "SAFETY TIMER", "dV MAX", "CHARGED CAPACITY"};
+        static lv_coord_t col_dsc[] = {15, 60, 60, 60, 40, 20,15, 30, LV_GRID_TEMPLATE_LAST};
+        static lv_coord_t row_dsc[] = {25, 25, 50, 40, 40, 30, LV_GRID_TEMPLATE_LAST};
+    }
+
+    void init_dischg_process_screen(lv_obj_t *cont){
+        const char * process_settings[5] = {"CUT VOLTAGE", "DSG CURRENT",  "CUT TEMP"};
+        static lv_coord_t col_dsc[] = {70, 70, 70, 70,  LV_GRID_TEMPLATE_LAST};
+        static lv_coord_t row_dsc[] = {30, 40, 40, 40, 30,  LV_GRID_TEMPLATE_LAST};
+        init_grid(cont, col_dsc, row_dsc);
+        lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
+        uint8_t max_capacity = 100;
+        uint8_t settings_cnt = 3;
+        //conts
+        //settings label conts
+        lv_obj_t *settings_label_conts[settings_cnt];
+        for(uint8_t i=0;i<settings_cnt;i++){
+            settings_label_conts[i] = lv_obj_create(cont);
+            init_cont(settings_label_conts[i], &basic_label_style, 0, (i+1), 2);
+        }
+        //buttons
+        //settings buttons
+        lv_obj_t *settings_buttons[settings_cnt];
+        for(uint8_t i=0;i<settings_cnt;i++){
+            settings_buttons[i] = lv_btn_create(cont);
+            init_button(settings_buttons[i], &black_button_style, &black_button_pr_style, 2, (i+1), 2);
+        }
+        //labels
+        //settings info  labels
+        lv_obj_t *settings_labels[settings_cnt];
+        for(uint8_t i=0; i<settings_cnt;i++){
+            settings_labels[i] = lv_label_create(settings_label_conts[i]);
+            lv_label_set_text_fmt(settings_labels[i], "%s", process_settings[i]);
+            lv_obj_align(settings_labels[i], LV_ALIGN_LEFT_MID, 0 , 0);
+        }
+        //settings btn labels
+        lv_obj_t *settings_btn_labels[settings_cnt];
+        for(uint8_t i=0;i<settings_cnt;i++){
+            settings_btn_labels[i] = lv_label_create(settings_buttons[i]);
+            lv_obj_align(settings_btn_labels[i], LV_ALIGN_RIGHT_MID, 0 ,0);
+        }
+        lv_label_set_text_fmt(settings_btn_labels[0], "%.3f", mem_manager.getCutVolt());
+        lv_label_set_text_fmt(settings_btn_labels[1], "%.1f", mem_manager.getDischgCurr());
+        lv_label_set_text_fmt(settings_btn_labels[2], "%u", mem_manager.getCutTemp());
 
     }
 
-    void init_dischg_process_screen(){
+    void init_start_dischg_process_screen(lv_obj_t *cont){
 
     }
 
-    void init_start_dischg_process_screen(){
+    void init_cycle_process_screen(lv_obj_t *cont){
+        const char * process_settings[5] = {"CHG CURR", "DSG CURR", "DIR", "CUT TEMP",  "REST TIME"};
+        static lv_coord_t col_dsc[] = {70, 70, 70, 70,  LV_GRID_TEMPLATE_LAST};
+        static lv_coord_t row_dsc[] = {25, 25, 25, 25, 25, 25, 30,  LV_GRID_TEMPLATE_LAST};
+        init_grid(cont, col_dsc, row_dsc);
+        lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
+        uint8_t max_capacity = 100;
+        uint8_t settings_cnt = 5;
+        //conts
+        //settings label conts
+        lv_obj_t *settings_label_conts[settings_cnt];
+        for(uint8_t i=0;i<settings_cnt;i++){
+            settings_label_conts[i] = lv_obj_create(cont);
+            init_cont(settings_label_conts[i], &basic_label_style, 0, (i+1), 2);
+        }
+        //buttons
+        //settings buttons
+        lv_obj_t *settings_buttons[settings_cnt];
+        for(uint8_t i=0;i<settings_cnt;i++){
+            settings_buttons[i] = lv_btn_create(cont);
+            init_button(settings_buttons[i], &black_button_style, &black_button_pr_style, 2, (i+1), 2);
+        }
+        //labels
+        //settings info  labels
+        lv_obj_t *settings_labels[settings_cnt];
+        for(uint8_t i=0; i<settings_cnt;i++){
+            settings_labels[i] = lv_label_create(settings_label_conts[i]);
+            lv_label_set_text_fmt(settings_labels[i], "%s", process_settings[i]);
+            lv_obj_align(settings_labels[i], LV_ALIGN_LEFT_MID, 0 , 0);
+        }
+        //settings btn labels
+        lv_obj_t *settings_btn_labels[settings_cnt];
+        for(uint8_t i=0;i<settings_cnt;i++){
+            settings_btn_labels[i] = lv_label_create(settings_buttons[i]);
+            lv_obj_align(settings_btn_labels[i], LV_ALIGN_RIGHT_MID, 0 ,0);
+        }
+        lv_label_set_text_fmt(settings_btn_labels[0], "%.1f", mem_manager.getChgCurr());
+        lv_label_set_text_fmt(settings_btn_labels[1], "%.1f", mem_manager.getDischgCurr());
+        lv_label_set_text_fmt(settings_btn_labels[2], "%s", "UP");
+        lv_label_set_text_fmt(settings_btn_labels[3], "%u", mem_manager.getCutTemp());
+        lv_label_set_text_fmt(settings_btn_labels[4], "%u", mem_manager.getRestTime());
+    }
+    void init_start_cycle_process_screen(lv_obj_t *cont){
 
     }
 
-    void init_cycle_process_screen(){
-
-    }
-    void init_start_cycle_process_screen(){
-
-    }
-
-    void init_store_process_screen(){
-
+    void init_store_process_screen(lv_obj_t *cont){
+        const char * process_settings[5] = {"CHG CURR", "DSG CURR", "STORE VOLT", "CUT TEMP"};
+        static lv_coord_t col_dsc[] = {70, 70, 70, 70,  LV_GRID_TEMPLATE_LAST};
+        static lv_coord_t row_dsc[] = {25, 32, 32, 32, 32,  30,  LV_GRID_TEMPLATE_LAST};
+        init_grid(cont, col_dsc, row_dsc);
+        lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
+        uint8_t max_capacity = 100;
+        uint8_t settings_cnt = 4;
+        //conts
+        //settings label conts
+        lv_obj_t *settings_label_conts[settings_cnt];
+        for(uint8_t i=0;i<settings_cnt;i++){
+            settings_label_conts[i] = lv_obj_create(cont);
+            init_cont(settings_label_conts[i], &basic_label_style, 0, (i+1), 2);
+        }
+        //buttons
+        //settings buttons
+        lv_obj_t *settings_buttons[settings_cnt];
+        for(uint8_t i=0;i<settings_cnt;i++){
+            settings_buttons[i] = lv_btn_create(cont);
+            init_button(settings_buttons[i], &black_button_style, &black_button_pr_style, 2, (i+1), 2);
+        }
+        //labels
+        //settings info  labels
+        lv_obj_t *settings_labels[settings_cnt];
+        for(uint8_t i=0; i<settings_cnt;i++){
+            settings_labels[i] = lv_label_create(settings_label_conts[i]);
+            lv_label_set_text_fmt(settings_labels[i], "%s", process_settings[i]);
+            lv_obj_align(settings_labels[i], LV_ALIGN_LEFT_MID, 0 , 0);
+        }
+        //settings btn labels
+        lv_obj_t *settings_btn_labels[settings_cnt];
+        for(uint8_t i=0;i<settings_cnt;i++){
+            settings_btn_labels[i] = lv_label_create(settings_buttons[i]);
+            lv_obj_align(settings_btn_labels[i], LV_ALIGN_RIGHT_MID, 0 ,0);
+        }
+        lv_label_set_text_fmt(settings_btn_labels[0], "%.1f", mem_manager.getChgCurr());
+        lv_label_set_text_fmt(settings_btn_labels[1], "%.1f", mem_manager.getDischgCurr());
+        lv_label_set_text_fmt(settings_btn_labels[2], "%.3f", mem_manager.getStoreVolt());
+        lv_label_set_text_fmt(settings_btn_labels[3], "%u", mem_manager.getCutTemp());
     }
 
     void init_start_store_process_screen(){
@@ -720,13 +898,7 @@ namespace gui{
         init_grid(cont, col_dsc, row_dsc);
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
          //info container
-        lv_obj_t *info_cont = lv_obj_create(cont);
-        lv_obj_remove_style_all(info_cont);
-        init_cont(info_cont, &info_cont_style, 0, 0, 5);
-        //info cont label
-        label_info_cont = lv_label_create(info_cont);
-        lv_obj_set_style_text_font(label_info_cont, &lv_font_montserrat_16, LV_STATE_DEFAULT);
-        lv_label_set_text(label_info_cont, "0-S BAT DETECTED 0.0V 0°C");
+        init_info_label(cont, label_info_cont, &info_cont_style, 5);
         //buttons
         lv_obj_t *back_btn = lv_btn_create(cont);
         lv_obj_t *data_btn = lv_btn_create(cont);
@@ -766,14 +938,8 @@ namespace gui{
         lv_obj_t *cont = lv_obj_create(curr_scr);
         init_grid(cont, col_dsc, row_dsc);
         lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
-         //info container
-        lv_obj_t *info_cont = lv_obj_create(cont);
-        lv_obj_remove_style_all(info_cont);
-        init_cont(info_cont, &info_cont_style, 0, 0, 2);
-        //info cont label
-        label_info_cont = lv_label_create(info_cont);
-        lv_obj_set_style_text_font(label_info_cont, &lv_font_montserrat_16, LV_STATE_DEFAULT);
-        lv_label_set_text(label_info_cont, "0-S BAT DETECTED 0.0V 0°C");
+        //info container
+        init_info_label(cont, label_info_cont, &info_cont_style, 2);
         //buttons
         //settings type buttons
         lv_obj_t *battery_settings_button = lv_btn_create(cont);
@@ -849,10 +1015,10 @@ namespace gui{
             lv_label_set_text(settings_labels[i], settings_strings[i]);
             lv_obj_align(settings_labels[i], LV_ALIGN_LEFT_MID, 0, 0);
         }
-        lv_label_set_text_fmt(settings_btn_labels[0], "%f", mem_manager.getVOV());
-        lv_label_set_text_fmt(settings_btn_labels[1], "%f", mem_manager.getVUV());
-        lv_label_set_text_fmt(settings_btn_labels[2], "%f", mem_manager.getStoreVolt());
-        lv_label_set_text_fmt(settings_btn_labels[3], "%f", mem_manager.getCutVolt());
+        lv_label_set_text_fmt(settings_btn_labels[0], "%.3f", mem_manager.getVOV());
+        lv_label_set_text_fmt(settings_btn_labels[1], "%.3f", mem_manager.getVUV());
+        lv_label_set_text_fmt(settings_btn_labels[2], "%.3f", mem_manager.getStoreVolt());
+        lv_label_set_text_fmt(settings_btn_labels[3], "%.3f", mem_manager.getCutVolt());
         lv_label_set_text_fmt(settings_btn_labels[4], "%u", mem_manager.getCutTemp());
         //back btn label
         lv_obj_t *back_label = lv_label_create(back_button);
@@ -906,9 +1072,9 @@ namespace gui{
             lv_obj_align(settings_labels[i], LV_ALIGN_LEFT_MID, 0, 0);
         }
         lv_label_set_text_fmt(settings_btn_labels[0], "%u", mem_manager.getADBMSQuantity());
-        lv_label_set_text_fmt(settings_btn_labels[1], "%f", mem_manager.getChgCurr());
-        lv_label_set_text_fmt(settings_btn_labels[2], "%f", mem_manager.getDischgCurr());
-        lv_label_set_text_fmt(settings_btn_labels[3], "%f", mem_manager.getChgVolt());
+        lv_label_set_text_fmt(settings_btn_labels[1], "%.1f", mem_manager.getChgCurr());
+        lv_label_set_text_fmt(settings_btn_labels[2], "%.1f", mem_manager.getDischgCurr());
+        lv_label_set_text_fmt(settings_btn_labels[3], "%.3f", mem_manager.getChgVolt());
         lv_label_set_text_fmt(settings_btn_labels[4], "%u", mem_manager.getSafetyTimer());
         lv_label_set_text_fmt(settings_btn_labels[5], "%u", mem_manager.getRestTime());
         //back btn label
@@ -1018,6 +1184,7 @@ namespace gui{
             temperature = 0;
         }
         lv_label_set_text_fmt(label_info_cont, "%u-s Battery detected   %.1fV %d°c", tot_cell_qnt, sum_cell_volt, temperature);
+
     }
     void adbms_settings_scr_read(lv_timer_t *timer){
         adbms.cell_detect();
@@ -1031,7 +1198,108 @@ namespace gui{
         lv_label_set_text_fmt(label_info_cont, "%u-s Battery detected %.1fV %d°c", tot_cell_qnt, sum_cell_volt, temperature);
     }
     void process_charge(lv_timer_t *timer){
-
+        //read ADC temp and check if not above cut temp
+        try{
+            adbms.start_gpio_adc_conversion();
+            adbms.read_aux_adc();
+            if(safety_timer <= 0){
+                throw std::out_of_range("Safety timer reset");
+            }if(temperature >= MAX_CHG_TEMP){
+                throw std::out_of_range("Charger temperature above cut temp");
+            }
+            float cut_temp = mem_manager.getCutTemp();
+            float max_chg_curr = mem_manager.getChgCurr();
+            float min_volt = mem_manager.getVUV();
+            float max_volt = mem_manager.getVOV();
+            for(uint8_t i=0;i<adbms.get_n();i++){
+                for(uint8_t j=0;j<9;j++){
+                    if(lm35.convertTemperature(adbms.convert_voltage(adbms.get_aux(i, j)))>=cut_temp){
+                        throw std::out_of_range("Battery temperature above cut temp");
+                    }
+                }
+                float maxV=0, minV=50;
+                if(!charge_state){
+                    charge_state = 1;
+                }
+                bool all_cells = charge_state == 2? true: false;
+                bool finish = charge_state == 1? true: false;
+                for(uint8_t j=0;j<adbms.get_cell_qnt(i);j++){
+                    if(charge_state == 1 && adbms(i, j) < min_volt){
+                        charge_state = 0;
+                    }else if(charge_state == 1 && adbms(i, j) > max_volt){
+                        charge_state = 2;
+                    }
+                    if(all_cells && adbms(i, j) >= max_volt){
+                        all_cells = false;
+                    }
+                    if(finish && (adbms(i, j) < (max_volt - 0.02))){
+                        finish = false;
+                    }
+                    if(adbms(i, j)<=minV){
+                        minV = adbms(i, j);
+                    }
+                    if(adbms(i, j)>=maxV){
+                        maxV = adbms(i, j);
+                    }
+                }
+                if(all_cells){
+                    charge_state = 1;
+                }
+                dV_max = (maxV - minV)*1000;
+                if(finish && dV_max <= mem_manager.getdVMin()){
+                    charge_state = 3;
+                }
+                safety_timer -= ((float)PROCESS_READ_PERIOD/1000.0);
+                switch(charge_state){
+                    case 0:
+                        //precharge state
+                        pwmproc::set_v_out(mem_manager.getChgVolt());
+                        pwmproc::set_i_out(IPRE);
+                        lv_label_set_text(label_start_process, "PRE-CHARGE");
+                        break;
+                    case 1:
+                        //fast charge state
+                        lv_label_set_text(label_start_process, "FAST CHARGE");
+                        pwmproc::set_v_out(mem_manager.getChgVolt());
+                        pwmproc::set_i_out(current_curr);
+                        if(current_curr < max_chg_curr*0.9){
+                            current_curr += max_chg_curr*0.1;
+                        }else if(current_curr >= max_chg_curr *0.9 && current_curr <max_chg_curr){
+                            current_curr += max_chg_curr*0.01;
+                        }
+                        if(dV_max > mem_manager.getdVMin()){
+                            //start ballancing
+                            adbms.start_cell_ballancing(2);
+                        }else{
+                            adbms.start_cell_ballancing(0);
+                        }
+                    break;
+                    case 2:
+                        //cov state
+                        lv_label_set_text(label_start_process, "COV STATE");
+                        adbms.start_cell_ballancing(0);
+                        pwmproc::set_v_out(mem_manager.getChgVolt());
+                        pwmproc::set_i_out(current_curr);
+                        if(current_curr >=0){
+                            current_curr -= max_chg_curr*0.01;
+                        }
+                    break;
+                    case 3:
+                        lv_label_set_text(label_start_process, "FINISH");
+                        pwmproc::set_v_out(0);
+                        pwmproc::set_i_out(0);
+                    break;
+                    default:
+                    break;
+                }
+            }
+            
+        }catch(const std::exception &e){
+            charge_state = 4;
+            lv_label_set_text_fmt(label_start_process, "%s", e.what());
+            pwmproc::set_v_out(0);
+            pwmproc::set_i_out(0);
+        }
     }
     void process_discharge(lv_timer_t *timer){
 

@@ -1,12 +1,19 @@
 #include <Arduino.h>
+#include <math.h>
 
 class LM35{
     private:
         uint8_t pin;
-        static const uint16_t max_adc;
+        uint8_t resolution;
+         uint32_t max_adc_val;
+    protected:
+        uint16_t readADC();
     public:
         LM35();
-        LM35(uint8_t adc_pin);
-        uint16_t read_adc();
-        static float convert_temperature(uint16_t adc);
+        LM35(uint8_t adcPin);
+        float getTemperature();
+        void setResolution(uint8_t res);
+        float convertTemperature(uint32_t adc);
+        float convertTemperature(float voltage);
+        
 }; 

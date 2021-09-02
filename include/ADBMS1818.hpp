@@ -110,8 +110,8 @@ class ADBMS1818{
         void read_aux_adc();
         float convert_voltage(uint16_t voltage);
         uint8_t get_n();
-
-        const uint16_t &operator () (int x, int y) const{
+        uint16_t get_aux(uint8_t x, uint8_t y);
+        const uint16_t &operator () (uint8_t x, uint8_t y) const{
             if(x < this->n && y < 18){
                 return this->cells_value[x][y];
             }else{

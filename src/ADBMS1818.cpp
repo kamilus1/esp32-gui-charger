@@ -647,3 +647,14 @@ void ADBMS1818::set_dcc(uint8_t n, uint32_t val){
 uint8_t ADBMS1818::get_n(){
     return this->n;
 }
+
+uint16_t ADBMS1818::get_aux(uint8_t x, uint8_t y){
+    try{
+        if(x>=this->n || y >=9){
+            throw std::out_of_range("selected adbms or GPIO is out of range :(");
+        }
+        return this->aux_value[x][y];
+    }catch(const std::out_of_range &e){
+        return 0;
+    }
+}

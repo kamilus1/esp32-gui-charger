@@ -13,16 +13,33 @@ const std::map<std::string, std::pair<uint8_t, uint8_t>> MemManager::memory_map 
     {"CUT_VOLT", {26, 4}},
     {"CUT_TEMP", {30, 1}},
     {"SAFETY_TIMER", {31, 2}},
-    {"REST_TIME", {33, 2}}
+    {"REST_TIME", {33, 2}}, 
+    {"DV_MIN", {35, 2}}
 };
 
 const uint16_t MemManager::mem_size = 64;
 
 
 MemManager::MemManager(){
+    values_read = false;
     EEPROM.begin(this->mem_size);
 }
-
+void MemManager::updateValues(){
+    values_read = false;
+    this->getADBMSQuantity();
+    this->getVOV();
+    this->getVUV();
+    this->getChgCurr();
+    this->getDischgCurr();
+    this->getChgVolt();
+    this->getStoreVolt();
+    this->getCutVolt();
+    this->getCutTemp();
+    this->getSafetyTimer();
+    this->getRestTime();
+    this->getdVMin();
+    values_read = true;
+}
 bool MemManager::firstUse(){
     return EEPROM.read(std::get<0>(this->memory_map.at("FIRST"))) != 7;
 }
@@ -45,52 +62,80 @@ void MemManager::clear(){
 }
 
 uint8_t MemManager::getADBMSQuantity(){
+    if(!this->values_read){
     this->read(std::get<0>(this->memory_map.at("ADBMS_QNT")), &this->adbms_quantity, std::get<1>(this->memory_map.at("ADBMS_QNT")));
+    }
     return this->adbms_quantity;
 }
 
 float MemManager::getVOV(){
+    if(!this->values_read){
     this->read(std::get<0>(this->memory_map.at("VOV")), this->vov.value_bytes, std::get<1>(this->memory_map.at("VOV")));
+    }
     return this->vov.value;
 }
 float MemManager::getVUV(){
+    if(!this->values_read){
     this->read(std::get<0>(this->memory_map.at("VUV")), this->vuv.value_bytes, std::get<1>(this->memory_map.at("VUV")));
+    }
     return this->vuv.value;
 }
 float MemManager::getChgCurr(){
+    if(!this->values_read){
     this->read(std::get<0>(this->memory_map.at("CHG_CURR")), this->chg_curr.value_bytes, std::get<1>(this->memory_map.at("CHG_CURR")));
+    }
     return this->chg_curr.value;
 }
 float MemManager::getDischgCurr(){
+    if(!this->values_read){
     this->read(std::get<0>(this->memory_map.at("DISCHG_CURR")), this->dischg_curr.value_bytes, std::get<1>(this->memory_map.at("DISCHG_CURR")));
+    }
     return this->dischg_curr.value;
 }
 
 float MemManager::getChgVolt(){
+    if(!this->values_read){
     this->read(std::get<0>(this->memory_map.at("CHG_VOLT")), this->chg_volt.value_bytes, std::get<1>(this->memory_map.at("CHG_VOLT")));
+    }
     return this->chg_volt.value;
 }
 
 float MemManager::getStoreVolt(){
+    if(!this->values_read){
     this->read(std::get<0>(this->memory_map.at("STORE_VOLT")), this->store_volt.value_bytes, std::get<1>(this->memory_map.at("STORE_VOLT")));
+    }
     return this->store_volt.value;
 }
 float MemManager::getCutVolt(){
+    if(!this->values_read){
     this->read(std::get<0>(this->memory_map.at("CUT_VOLT")), this->cut_volt.value_bytes, std::get<1>(this->memory_map.at("CUT_VOLT")));
+    }
     return this->cut_volt.value;
 }
 uint8_t MemManager::getCutTemp(){
+    if(!this->values_read){
     this->read(std::get<0>(this->memory_map.at("CUT_TEMP")), &this->cut_temp, std::get<1>(this->memory_map.at("CUT_TEMP")));
+    }
     return this->cut_temp;
 }
 uint16_t MemManager::getSafetyTimer(){
+    if(!this->values_read){
     this->read(std::get<0>(this->memory_map.at("SAFETY_TIMER")), this->safety_timer.value_bytes, std::get<1>(this->memory_map.at("SAFETY_TIMER")));
+    }
     return this->safety_timer.value;
 }
 
 uint16_t MemManager::getRestTime(){
-    this->read(std::get<0>(this->memory_map.at("REST_TIME")), this->rest_time.value_bytes, std::get<1>(this->memory_map.at("REST_TIME")));
+    if(!this->values_read){
+        this->read(std::get<0>(this->memory_map.at("REST_TIME")), this->rest_time.value_bytes, std::get<1>(this->memory_map.at("REST_TIME")));
+    }
     return this->rest_time.value;
+}
+uint16_t MemManager::getdVMin(){
+    if(!this->values_read){
+        this->read(std::get<0>(this->memory_map.at("DV_MIN")), this->dV_min.value_bytes, std::get<1>(this->memory_map.at("DV_MIN")));
+    }
+    return this->dV_min.value;
 }
 
 void MemManager::setADBMSQuantity(uint8_t data){
@@ -146,12 +191,16 @@ void MemManager::setRestTime(uint16_t timestamp){
     this->rest_time.value = timestamp;
     this->write(std::get<0>(this->memory_map.at("REST_TIME")), this->rest_time.value_bytes, std::get<1>(this->memory_map.at("REST_TIME")));
 }
-
+void MemManager::setdVMin(uint16_t dV){
+    this->dV_min.value = dV;
+    this->write(std::get<0>(this->memory_map.at("DV_MIN")), this->dV_min.value_bytes, std::get<1>(this->memory_map.at("DV_MIN")));
+}
 void MemManager::setDefaultSettings(){
+    values_read = true;
     uint8_t val = 7;
     this->write(std::get<0>(this->memory_map.at("FIRST")), &val, std::get<1>(this->memory_map.at("FIRST")));
-    this->setVOV(4.25);
-    this->setVUV(1.0);
+    this->setVOV(4.21);
+    this->setVUV(1.5);
     this->setChgCurr(10.0);
     this->setDischgCurr(2.5);
     this->setChgVolt(25.0);

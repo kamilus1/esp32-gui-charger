@@ -7,6 +7,7 @@
 #include "lm35.hpp"
 #include <vector>
 #include <cstring>
+#include <exception>
 
 namespace gui{
     //machine state
@@ -29,6 +30,10 @@ namespace gui{
     static uint8_t process_type_selected;
     static uint8_t data_type_selected;
     static uint8_t current_adbms;
+    static uint32_t safety_timer;
+    static float current_curr;
+    static uint16_t dV_max;
+    static uint8_t charge_state;
 
     //styles
     static lv_color_t main_buttons_colors[6] 
@@ -100,22 +105,23 @@ namespace gui{
     static lv_obj_t *label_cells_voltage[18];
     static lv_obj_t *bars_cells_voltage[18];
     static lv_obj_t *label_special_symbol;
+    static lv_obj_t *label_start_process;
     void init_start_screen();
     //process screens
     void init_process_screen(uint8_t process_type = CHARGE_PROCESS);
     void init_start_process_screen(uint8_t process_type = CHARGE_PROCESS);
 
-    void init_chg_process_screen();
-    void init_start_chg_process_screen();
+    void init_chg_process_screen(lv_obj_t *cont);
+    void init_start_chg_process_screen(lv_obj_t *cont);
 
-    void init_dischg_process_screen();
-    void init_start_dischg_process_screen();
+    void init_dischg_process_screen(lv_obj_t *cont);
+    void init_start_dischg_process_screen(lv_obj_t *cont);
 
-    void init_cycle_process_screen();
-    void init_start_cycle_process_screen();
+    void init_cycle_process_screen(lv_obj_t *cont);
+    void init_start_cycle_process_screen(lv_obj_t *cont);
 
-    void init_store_process_screen();
-    void init_start_store_process_screen();
+    void init_store_process_screen(lv_obj_t *cont);
+    void init_start_store_process_screen(lv_obj_t *cont);
     //data screens
     void init_data_list_screen();
     void init_data_candles_screen();

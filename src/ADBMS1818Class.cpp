@@ -1,7 +1,7 @@
 #include "ADBMS1818Class.hpp"
 
 const float ADBMS1818Class::vcell_min_exist = 1000.0;
-const float ADBMS1818Class::vcell_max = 4700.0;
+const float ADBMS1818Class::vcell_max = 4250.0;
 
 void ADBMS1818Class::start_all_conversions(){
     this->start_cv_adc_conversion();
@@ -107,7 +107,7 @@ void ADBMS1818Class::start_cell_ballancing(uint8_t value){
             this->set_sct_pin_value(value, (j+1), i);
         }
         for(uint8_t j=this->cell_qnt[i]; j<18; j++){
-            this->set_sct_pin_value(value, (j+1), i);
+            this->set_sct_pin_value(0, (j+1), i);
         }
     }
     this->write_sct_reg();

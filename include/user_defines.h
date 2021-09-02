@@ -1,6 +1,7 @@
 
 
 #define ADBMS_AMOUNT 1
+#define ADBMS_ADC_RESOLUTION 16
 #define CS 5
 
 #define TOUCH_THRESHOLD 600
@@ -21,5 +22,8 @@
 
 
 #define ADBMS_READ_PERIOD 500 //500 ms 
+#define PROCESS_READ_PERIOD 1000 //1000 ms 
 #define MAX_CURRENT 25 //In amperes
+#define MAX_CHG_TEMP 90 //in degrees
+#define IPRE 1.0
 

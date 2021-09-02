@@ -22,7 +22,8 @@ class MemManager{
     uint8_t adbms_quantity, cut_temp;
     mem_float vov, vuv, chg_curr, dischg_curr, chg_volt;
     mem_float store_volt, cut_volt;
-    mem_uint16 safety_timer, rest_time;
+    mem_uint16 safety_timer, rest_time, dV_min;
+    bool values_read;
     protected:
         void read(uint8_t addr, uint8_t *dst, uint16_t len);
         void write(uint8_t addr, uint8_t *data, uint16_t len);
@@ -42,6 +43,7 @@ class MemManager{
         uint8_t getCutTemp();
         uint16_t getSafetyTimer();
         uint16_t getRestTime();
+        uint16_t getdVMin();
         void setADBMSQuantity(uint8_t data);
         void setVOV(float data);
         void setVUV(float data);
@@ -53,6 +55,7 @@ class MemManager{
         void setCutTemp(uint8_t temp);
         void setSafetyTimer(uint16_t timestamp);
         void setRestTime(uint16_t timestamp);
+        void setdVMin(uint16_t dV);
         void setDefaultSettings();
 
 };

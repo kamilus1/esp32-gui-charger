@@ -21,7 +21,8 @@ ADBMS1818Class adbms = ADBMS1818Class(adbms_pins); //constructor with modified p
 //address depends on signals attached to A0 and A1 pins of ina238. 
 //https://www.ti.com/lit/ds/symlink/ina238-q1.pdf?ts=1623446444912#page=15
 ina238 ina((uint16_t)INA238_ADDR);
-
+//lm35 sensor class
+LM35 lm35 = LM35();
 //eeprom mem manager class
 MemManager mem_manager = MemManager();
 //lvgt gui vars
@@ -43,7 +44,11 @@ void setup() {
   //configure memory
   if(mem_manager.firstUse()){
     mem_manager.setDefaultSettings();
+  }else{
+    mem_manager.updateValues();
   }
+  //configure lm35 driver
+  lm35.setResolution(ADBMS_ADC_RESOLUTION);
   //configuring UART interrupts 
   uart_config_t uart_0_config = {
     .baud_rate = BAUD_RATE, 

@@ -54,6 +54,7 @@ namespace gui{
     static lv_style_t info_cont_style;
     static lv_style_t basic_label_style;
     static lv_style_t error_label_style;
+    static lv_style_t process_data_label_style;
     static lv_style_t msg_box_style;
     static lv_style_t msg_box_btn_style;
     static lv_style_t bar_style;
@@ -66,6 +67,7 @@ namespace gui{
     void init_main_btn_style();
     void init_main_btn_pr_style();
     void init_prc_lbl_style();
+    void init_prc_data_lbl_style();
     void init_info_cnt_style();
     void init_msg_box_style();
     void init_msg_box_btn_style();

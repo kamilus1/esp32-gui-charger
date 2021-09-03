@@ -23,6 +23,7 @@ namespace gui{
         init_main_btn_style();
         init_main_btn_pr_style();
         init_prc_lbl_style();
+        init_prc_data_lbl_style();
         init_info_cnt_style();
         init_basic_label_style();
         init_error_label_style();
@@ -49,7 +50,7 @@ namespace gui{
         lv_style_set_bg_color(&black_button_style, LV_COLOR_MAKE(0, 0, 0));
         lv_style_set_border_width(&black_button_style, 2);
         lv_style_set_border_color(&black_button_style, LV_COLOR_MAKE(224, 224, 224));
-        lv_style_set_border_opa(&black_button_style, LV_OPA_40);
+        lv_style_set_border_opa(&black_button_style, LV_OPA_100);
         lv_style_set_shadow_width(&black_button_style, 0);
         lv_style_set_shadow_ofs_y(&black_button_style, 0);
         lv_style_set_outline_opa(&black_button_style, LV_OPA_COVER);
@@ -106,6 +107,17 @@ namespace gui{
         lv_style_set_bg_color(&process_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
         lv_style_set_border_color(&process_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
         lv_style_set_bg_grad_color(&process_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
+    }
+
+    void init_prc_data_lbl_style(){
+        lv_style_init(&process_data_label_style);
+        lv_style_set_text_color(&process_data_label_style, LV_COLOR_MAKE(0xff, 0xff, 0xff));
+        lv_style_set_bg_color(&process_data_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
+        lv_style_set_border_color(&process_data_label_style, LV_COLOR_MAKE(224, 224, 224));
+        lv_style_set_border_width(&process_data_label_style, 2);
+        lv_style_set_radius(&process_data_label_style, 0);
+        lv_style_set_bg_grad_color(&process_data_label_style, LV_COLOR_MAKE(0x00, 0x00, 0x00));
+        lv_style_set_border_opa(&process_data_label_style, LV_OPA_100);
     }
     void init_info_cnt_style(){             
         lv_style_init(&info_cont_style);
@@ -623,6 +635,14 @@ namespace gui{
         const char* process_values[4] = {"BAT TEMP", "SAFETY TIMER", "dV MAX", "CHARGED CAPACITY"};
         static lv_coord_t col_dsc[] = {15, 60, 60, 60, 40, 20,15, 30, LV_GRID_TEMPLATE_LAST};
         static lv_coord_t row_dsc[] = {25, 25, 50, 40, 40, 30, LV_GRID_TEMPLATE_LAST};
+        //conts
+        //process state container
+        lv_obj_t *process_state_cont = lv_obj_create(cont);
+        init_cont(process_state_cont, &basic_label_style, 0, 1, 8);
+
+        //labels
+        //label process state
+        label_start_process = lv_label_create(process_state_cont);
     }
 
     void init_dischg_process_screen(lv_obj_t *cont){
@@ -1302,7 +1322,11 @@ namespace gui{
         }
     }
     void process_discharge(lv_timer_t *timer){
+        try{
 
+        }catch(const std::exception &e){
+
+        }
     }
     void process_store(lv_timer_t *timer){
 

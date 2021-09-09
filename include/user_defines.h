@@ -14,6 +14,22 @@
 #define STORE_PROCESS 1
 #define DISCHARGE_PROCESS 2
 #define CYCLE_PROCESS 3
+//process states
+#define FINISH_STATE 3
+#define ERROR_STATE 4
+#define PRECHARGE_STATE 0
+#define FASTCHARGE_STATE 1
+#define COV_STATE 2
+#define DISCHARGE_STATE 0
+#define STORE_START_STATE 0
+#define STORE_DSG_STATE 1
+#define STORE_CHG_STATE 2
+#define CYCLE_START_STATE 0
+#define CYCLE_CHG_STATE 1
+#define CYCLE_DSG_STATE 2
+#define CYCLE_REST_STATE 5
+
+
 //ina238 driver
 //address depends on signals attached to A0 and A1 pins of ina238. 
 //https://www.ti.com/lit/ds/symlink/ina238-q1.pdf?ts=1623446444912#page=15

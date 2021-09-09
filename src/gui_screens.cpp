@@ -19,6 +19,7 @@ namespace gui{
         current_adbms = 0;
         current_curr = 0;
         charge_state = 0;
+        capacity = 0;
         init_main_scr_style();
         init_main_btn_style();
         init_main_btn_pr_style();
@@ -285,6 +286,8 @@ namespace gui{
     static void process_start_switch_handler(lv_event_t *e){
         if(state == 2){
             state = 3;
+            capacity = 0;
+            temperature = 0;
             uint8_t *process_type = (uint8_t *) lv_event_get_user_data(e);
             switch(*process_type){
                 case CHARGE_PROCESS:
@@ -337,7 +340,7 @@ namespace gui{
     }
 
     static void data_next_adbms_handler(lv_event_t *e){
-        if((current_adbms + 1) >= ADBMS_AMOUNT){
+        if((current_adbms + 1) >= adbms.get_n()){
             current_adbms = 0;
         }else{
             current_adbms += 1;
@@ -347,7 +350,7 @@ namespace gui{
 
     static void data_prev_adbms_handler(lv_event_t *e){
         if(current_adbms <= 0){
-            current_adbms = (ADBMS_AMOUNT - 1);
+            current_adbms = (adbms.get_n() - 1);
         }else{
             current_adbms -= 1;
         }
@@ -539,9 +542,17 @@ namespace gui{
         lv_obj_center(label_process);
     }
     void init_start_process_screen(uint8_t process_type){
+        static lv_coord_t col_dsc[] = {15, 60, 60, 60, 40, 20,15, 30, LV_GRID_TEMPLATE_LAST};
+        static lv_coord_t row_dsc[] = {25, 25, 50, 40, 40, 30, LV_GRID_TEMPLATE_LAST};
+        curr_scr = lv_obj_create(NULL);
+        lv_obj_add_style(curr_scr, &main_screen_style, LV_STATE_DEFAULT );
+        lv_obj_t *cont = lv_obj_create(curr_scr);
+        init_grid(cont, col_dsc, row_dsc);
+        lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
+        uint8_t cols = 7, rows=5;
         switch(process_type){
             case CHARGE_PROCESS:
-            
+                init_start_chg_process_screen(cont);
             break;
             case STORE_PROCESS:
             break;
@@ -554,16 +565,10 @@ namespace gui{
         }
         std::vector<std::string> process = {"CHARGING IN PROGRESS", "STORING IN PROGRESS", 
         "DISCHARGING IN PROGRESS", "CYCLING IN PROGRESS"};
+       
         
-        curr_scr = lv_obj_create(NULL);
-        lv_obj_add_style(curr_scr, &main_screen_style, LV_STATE_DEFAULT );
-        static lv_coord_t col_dsc[] = {60, 60, 60, 60, 60, LV_GRID_TEMPLATE_LAST};
-        static lv_coord_t row_dsc[] = {25, 30, 30, 30, 30, 30,   LV_GRID_TEMPLATE_LAST};
-        lv_obj_t *cont = lv_obj_create(curr_scr);
-        init_grid(cont, col_dsc, row_dsc);
-        lv_obj_add_style(cont, &main_screen_style, LV_STATE_DEFAULT);
         //info container
-        init_info_label(cont, label_info_cont, &info_cont_style, 5);
+        init_info_label(cont, label_info_cont, &info_cont_style, 8);
         //buttons
         lv_obj_t *stop_btn = lv_btn_create(cont);
         lv_obj_t *data_btn = lv_btn_create(cont);
@@ -632,17 +637,8 @@ namespace gui{
     }
 
     void init_start_chg_process_screen(lv_obj_t *cont){
-        const char* process_values[4] = {"BAT TEMP", "SAFETY TIMER", "dV MAX", "CHARGED CAPACITY"};
-        static lv_coord_t col_dsc[] = {15, 60, 60, 60, 40, 20,15, 30, LV_GRID_TEMPLATE_LAST};
-        static lv_coord_t row_dsc[] = {25, 25, 50, 40, 40, 30, LV_GRID_TEMPLATE_LAST};
-        //conts
-        //process state container
-        lv_obj_t *process_state_cont = lv_obj_create(cont);
-        init_cont(process_state_cont, &basic_label_style, 0, 1, 8);
-
-        //labels
-        //label process state
-        label_start_process = lv_label_create(process_state_cont);
+        const char* process_values[6] = {"VOLTAGE", "CHG CURR", "BAT TEMP", "CHARGING TIME", "dV MAX", "CHARGED CAPACITY"};
+        init_process_data_labels(cont, label_process_data, label_start_process, &process_data_label_style, &basic_label_style, process_values);
     }
 
     void init_dischg_process_screen(lv_obj_t *cont){
@@ -688,7 +684,8 @@ namespace gui{
     }
 
     void init_start_dischg_process_screen(lv_obj_t *cont){
-
+        const char * process_values[6] = {"VOLTAGE", "DSG CURR", "BAT TEMP", "DSG TIME", "", "DSG CAPACITY"};
+        init_process_data_labels(cont, label_process_data, label_start_process, &process_data_label_style, &basic_label_style, process_values);
     }
 
     void init_cycle_process_screen(lv_obj_t *cont){
@@ -734,7 +731,8 @@ namespace gui{
         lv_label_set_text_fmt(settings_btn_labels[4], "%u", mem_manager.getRestTime());
     }
     void init_start_cycle_process_screen(lv_obj_t *cont){
-
+        const char * process_values[6] = {"VOLTAGE", "CURR", "BAT TEMP", "PROC TIME", "", "DSG CAPACITY"};
+        init_process_data_labels(cont, label_process_data, label_start_process, &process_data_label_style, &basic_label_style, process_values);
     }
 
     void init_store_process_screen(lv_obj_t *cont){
@@ -779,8 +777,9 @@ namespace gui{
         lv_label_set_text_fmt(settings_btn_labels[3], "%u", mem_manager.getCutTemp());
     }
 
-    void init_start_store_process_screen(){
-
+    void init_start_store_process_screen(lv_obj_t *cont){
+        const char * process_values[6] = {"VOLTAGE", "CHG CURR", "BAT TEMP", "PROC TIME", "", "CHG CAPACITY"};
+        init_process_data_labels(cont, label_process_data, label_start_process, &process_data_label_style, &basic_label_style, process_values);
     }
 
     void init_data_list_screen(){
@@ -1206,6 +1205,42 @@ namespace gui{
         lv_label_set_text_fmt(label_info_cont, "%u-s Battery detected   %.1fV %d°c", tot_cell_qnt, sum_cell_volt, temperature);
 
     }
+
+    void adbms_start_process_chg_scr_read(lv_timer_t *timer){
+        adbms.cell_detect();
+        tot_cell_qnt = adbms.get_tot_cell_qnt();
+        sum_cell_volt = adbms.get_sum_cell_voltage();
+        float current;
+        if(ina.device_found()){
+            current = ina.read_current();
+            temperature = (int)ina.read_temperature();
+        }else{
+            temperature = 0;
+            current = 0.0;
+        }
+        float max_temp = 0.0, temp;
+        adbms.start_gpio_adc_conversion();
+        if(adbms.pladc_rdy()){
+            adbms.read_aux_adc();
+            for(uint8_t i=0;i<adbms.get_n();i++){
+                for(uint8_t j=0;j<9;j++){
+                    temp = lm35.convertTemperature(adbms.convert_voltage(adbms.get_aux(i, j))); 
+                    if(max_temp<=temp){
+                        max_temp = temp;
+                    }
+                }
+            }
+        }
+        //assuming that period is 0.5 seconds
+        capacity += (current * 5) /36;
+        lv_label_set_text_fmt(label_info_cont, "%u-s Battery detected   %.1fV %d°c", tot_cell_qnt, sum_cell_volt, temperature);
+        lv_label_set_text_fmt(label_process_data[0], "%.1fV", sum_cell_volt);
+        lv_label_set_text_fmt(label_process_data[1], "%.1fA", current);
+        lv_label_set_text_fmt(label_process_data[2], "%.1f°C", max_temp);
+        lv_label_set_text_fmt(label_process_data[3], "%u mins", (safety_timer/60));
+        lv_label_set_text_fmt(label_process_data[4], "%umV", dV_max);
+        lv_label_set_text_fmt(label_process_data[5], "%.2fmAh", capacity);
+    }
     void adbms_settings_scr_read(lv_timer_t *timer){
         adbms.cell_detect();
         tot_cell_qnt = adbms.get_tot_cell_qnt();
@@ -1220,102 +1255,106 @@ namespace gui{
     void process_charge(lv_timer_t *timer){
         //read ADC temp and check if not above cut temp
         try{
-            adbms.start_gpio_adc_conversion();
-            adbms.read_aux_adc();
-            if(safety_timer <= 0){
-                throw std::out_of_range("Safety timer reset");
-            }if(temperature >= MAX_CHG_TEMP){
-                throw std::out_of_range("Charger temperature above cut temp");
-            }
-            float cut_temp = mem_manager.getCutTemp();
-            float max_chg_curr = mem_manager.getChgCurr();
-            float min_volt = mem_manager.getVUV();
-            float max_volt = mem_manager.getVOV();
-            for(uint8_t i=0;i<adbms.get_n();i++){
-                for(uint8_t j=0;j<9;j++){
-                    if(lm35.convertTemperature(adbms.convert_voltage(adbms.get_aux(i, j)))>=cut_temp){
-                        throw std::out_of_range("Battery temperature above cut temp");
-                    }
+            if(! (charge_state == ERROR_STATE || charge_state == FINISH_STATE)){
+                adbms.start_gpio_adc_conversion();
+                adbms.read_aux_adc();
+                if(safety_timer == (mem_manager.getSafetyTimer()*60)){
+                    throw std::out_of_range("Safety timer reset");
+                }if(temperature >= MAX_CHG_TEMP){
+                    throw std::out_of_range("Charger temperature above cut temp");
                 }
+                float cut_temp = mem_manager.getCutTemp();
+                float max_chg_curr = mem_manager.getChgCurr();
+                float min_volt = mem_manager.getVUV();
+                float max_volt = mem_manager.getVOV();
+                bool all_cells = charge_state == COV_STATE? true: false;
+                bool finish = charge_state == FASTCHARGE_STATE? true: false;
                 float maxV=0, minV=50;
-                if(!charge_state){
-                    charge_state = 1;
+                for(uint8_t i=0;i<adbms.get_n();i++){
+                    for(uint8_t j=0;j<9;j++){
+                        if(lm35.convertTemperature(adbms.convert_voltage(adbms.get_aux(i, j)))>=cut_temp){
+                            throw std::out_of_range("Battery temperature above cut temp");
+                        }
+                    }
+                    
+                    if(!charge_state){
+                        charge_state = FASTCHARGE_STATE;
+                    }
+                    
+                    for(uint8_t j=0;j<adbms.get_cell_qnt(i);j++){
+                        float volt = adbms.convert_voltage(adbms(i, j));
+                        if(charge_state == FASTCHARGE_STATE &&  volt< min_volt){
+                            charge_state = PRECHARGE_STATE;
+                        }else if(volt > max_volt){
+                            charge_state = COV_STATE;
+                        }
+                        if(all_cells && volt >= max_volt){
+                            all_cells = false;
+                        }
+                        if(finish && (volt < (max_volt - 0.02))){
+                            finish = false;
+                        }
+                        if(volt<=minV){
+                            minV = volt;
+                        }
+                        if(volt>=maxV){
+                            maxV = volt;
+                        }
+                    }
                 }
-                bool all_cells = charge_state == 2? true: false;
-                bool finish = charge_state == 1? true: false;
-                for(uint8_t j=0;j<adbms.get_cell_qnt(i);j++){
-                    if(charge_state == 1 && adbms(i, j) < min_volt){
-                        charge_state = 0;
-                    }else if(charge_state == 1 && adbms(i, j) > max_volt){
-                        charge_state = 2;
+                    if(all_cells){
+                        charge_state = 1;
                     }
-                    if(all_cells && adbms(i, j) >= max_volt){
-                        all_cells = false;
+                    dV_max = (maxV - minV)*1000;
+                    if(finish && dV_max <= mem_manager.getdVMin()){
+                        charge_state = FINISH_STATE;
                     }
-                    if(finish && (adbms(i, j) < (max_volt - 0.02))){
-                        finish = false;
-                    }
-                    if(adbms(i, j)<=minV){
-                        minV = adbms(i, j);
-                    }
-                    if(adbms(i, j)>=maxV){
-                        maxV = adbms(i, j);
-                    }
-                }
-                if(all_cells){
-                    charge_state = 1;
-                }
-                dV_max = (maxV - minV)*1000;
-                if(finish && dV_max <= mem_manager.getdVMin()){
-                    charge_state = 3;
-                }
-                safety_timer -= ((float)PROCESS_READ_PERIOD/1000.0);
-                switch(charge_state){
-                    case 0:
-                        //precharge state
-                        pwmproc::set_v_out(mem_manager.getChgVolt());
-                        pwmproc::set_i_out(IPRE);
-                        lv_label_set_text(label_start_process, "PRE-CHARGE");
+                    safety_timer += ((float)PROCESS_READ_PERIOD/999.0);
+                    switch(charge_state){
+                        case PRECHARGE_STATE:
+                            //precharge state
+                            pwmproc::set_v_out(mem_manager.getChgVolt());
+                            pwmproc::set_i_out(IPRE);
+                            lv_label_set_text(label_start_process, "PRE-CHARGE");
+                            break;
+                        case FASTCHARGE_STATE:
+                            //fast charge state
+                            lv_label_set_text(label_start_process, "FAST CHARGE");
+                            pwmproc::set_v_out(mem_manager.getChgVolt());
+                            pwmproc::set_i_out(current_curr);
+                            if(current_curr < max_chg_curr*0.9){
+                                current_curr += max_chg_curr*0.1;
+                            }else if(current_curr >= max_chg_curr *0.9 && current_curr <max_chg_curr){
+                                current_curr += max_chg_curr*0.01;
+                            }
+                            if(dV_max > mem_manager.getdVMin()){
+                                //start ballancing
+                                adbms.start_cell_ballancing(2);
+                            }else{
+                                adbms.start_cell_ballancing(0);
+                            }
                         break;
-                    case 1:
-                        //fast charge state
-                        lv_label_set_text(label_start_process, "FAST CHARGE");
-                        pwmproc::set_v_out(mem_manager.getChgVolt());
-                        pwmproc::set_i_out(current_curr);
-                        if(current_curr < max_chg_curr*0.9){
-                            current_curr += max_chg_curr*0.1;
-                        }else if(current_curr >= max_chg_curr *0.9 && current_curr <max_chg_curr){
-                            current_curr += max_chg_curr*0.01;
-                        }
-                        if(dV_max > mem_manager.getdVMin()){
-                            //start ballancing
-                            adbms.start_cell_ballancing(2);
-                        }else{
+                        case COV_STATE:
+                            //cov state
+                            lv_label_set_text(label_start_process, "COV STATE");
                             adbms.start_cell_ballancing(0);
-                        }
-                    break;
-                    case 2:
-                        //cov state
-                        lv_label_set_text(label_start_process, "COV STATE");
-                        adbms.start_cell_ballancing(0);
-                        pwmproc::set_v_out(mem_manager.getChgVolt());
-                        pwmproc::set_i_out(current_curr);
-                        if(current_curr >=0){
-                            current_curr -= max_chg_curr*0.01;
-                        }
-                    break;
-                    case 3:
-                        lv_label_set_text(label_start_process, "FINISH");
-                        pwmproc::set_v_out(0);
-                        pwmproc::set_i_out(0);
-                    break;
-                    default:
-                    break;
-                }
+                            pwmproc::set_v_out(mem_manager.getChgVolt());
+                            pwmproc::set_i_out(current_curr);
+                            if(current_curr >=0){
+                                current_curr -= max_chg_curr*0.01;
+                            }
+                        break;
+                        case FINISH_STATE:
+                            lv_label_set_text(label_start_process, "FINISH");
+                            pwmproc::set_v_out(0);
+                            pwmproc::set_i_out(0);
+                        break;
+                        default:
+                        break;
+                    }
             }
-            
         }catch(const std::exception &e){
-            charge_state = 4;
+            charge_state = ERROR_STATE;
             lv_label_set_text_fmt(label_start_process, "%s", e.what());
             pwmproc::set_v_out(0);
             pwmproc::set_i_out(0);
@@ -1323,16 +1362,205 @@ namespace gui{
     }
     void process_discharge(lv_timer_t *timer){
         try{
-
+            if(! (charge_state == ERROR_STATE || charge_state == FINISH_STATE)){
+                float cut_temp = mem_manager.getCutTemp();
+                adbms.start_gpio_adc_conversion();
+                adbms.read_aux_adc();
+                if(temperature >= MAX_CHG_TEMP){
+                    throw std::out_of_range("Charger temperature above cut temp");
+                }
+                charge_state = FINISH_STATE;
+                for(uint8_t i=0;i<adbms.get_n();i++){
+                    for(uint8_t j=0;j<9;j++){
+                        if(lm35.convertTemperature(adbms.convert_voltage(adbms.get_aux(i, j)))>=cut_temp){
+                            throw std::out_of_range("Battery temperature above cut temp");
+                        }
+                    }
+                    for(uint8_t j=0;j<adbms.get_cell_qnt(i);j++){
+                        
+                        if(adbms.convert_voltage(adbms(i, j))>mem_manager.getCutVolt()){
+                            charge_state = DISCHARGE_STATE;
+                        }
+                    }
+                }
+                switch(charge_state){
+                    case DISCHARGE_STATE:
+                    pwmproc::set_i_load(mem_manager.getDischgCurr());
+                    break;
+                    case FINISH_STATE:
+                    lv_label_set_text(label_start_process, "FINISH");
+                    pwmproc::set_i_load(0);
+                    default:
+                    break;
+                }
+            }
+            
         }catch(const std::exception &e){
-
+            charge_state = ERROR_STATE;
+            lv_label_set_text_fmt(label_start_process, "%s", e.what());
+            pwmproc::set_i_load(0);
         }
     }
     void process_store(lv_timer_t *timer){
-
+        try{
+            if(! (charge_state == ERROR_STATE || charge_state == FINISH_STATE)){
+                float cut_temp = mem_manager.getCutTemp();
+                if(temperature >= MAX_CHG_TEMP){
+                    throw std::out_of_range("Charger temperature above cut temp");
+                }
+                adbms.start_gpio_adc_conversion();
+                adbms.read_aux_adc();
+                for(uint8_t i=0;i<adbms.get_n();i++){
+                    for(uint8_t j=0;j<9;j++){
+                        if(lm35.convertTemperature(adbms.convert_voltage(adbms.get_aux(i, j)))>=cut_temp){
+                            throw std::out_of_range("Battery temperature above cut temp");
+                        }
+                    }
+                    if(charge_state == STORE_START_STATE){
+                        charge_state = FINISH_STATE;
+                    }else if(charge_state == STORE_DSG_STATE){
+                        charge_state = STORE_START_STATE;
+                    }
+                    for(uint8_t j=0;j<adbms.get_cell_qnt(i);j++){
+                        float volt = adbms.convert_voltage(adbms(i, j));
+                        if(volt <mem_manager.getVUV() || volt >mem_manager.getVOV()){
+                            throw std::out_of_range("Voltage battery out of range");
+                        }
+                        if(volt>(mem_manager.getStoreVolt()+0.02)){
+                                charge_state = STORE_DSG_STATE;
+                        }
+                        if(charge_state!=STORE_DSG_STATE && volt <(mem_manager.getStoreVolt()-0.02)){
+                            charge_state = STORE_CHG_STATE;
+                        }
+                        if(charge_state == STORE_START_STATE){
+                            if(volt<=mem_manager.getVUV() || volt >mem_manager.getStoreVolt()){
+                                charge_state = STORE_DSG_STATE;
+                            }
+                        }else if(charge_state == STORE_CHG_STATE){
+                            if(volt >= mem_manager.getStoreVolt()){
+                                charge_state = STORE_START_STATE;
+                            }
+                        }
+                    }
+                }
+                switch (charge_state)
+                {
+                case STORE_START_STATE:
+                    pwmproc::set_i_load(0);
+                    pwmproc::set_v_out(0);
+                    pwmproc::set_i_out(0);
+                    break;
+                case STORE_DSG_STATE:
+                    pwmproc::set_i_out(0);
+                    pwmproc::set_v_out(0);
+                    pwmproc::set_i_load(mem_manager.getDischgCurr());
+                    break;
+                case STORE_CHG_STATE:
+                    pwmproc::set_i_load(0);
+                    pwmproc::set_v_out(mem_manager.getChgVolt());
+                    pwmproc::set_i_out(mem_manager.getChgCurr());
+                    break;
+                case FINISH_STATE:
+                    lv_label_set_text(label_start_process,"FINISH");
+                    pwmproc::set_i_load(0);
+                    pwmproc::set_v_out(0);
+                    pwmproc::set_i_out(0);
+                    break;
+                default:
+                    break;
+                }
+            }
+        }catch(const std::exception &e){
+            charge_state = ERROR_STATE;
+            lv_label_set_text_fmt(label_start_process, "%s", e.what());
+            pwmproc::set_i_load(0);
+            pwmproc::set_v_out(0);
+            pwmproc::set_i_out(0);
+        }
     }
     void process_cycle(lv_timer_t *timer){
-
+        try{
+            if(! (charge_state == ERROR_STATE || charge_state == FINISH_STATE)){
+                float cut_temp = mem_manager.getCutTemp();
+                uint8_t next_state;
+                if(temperature >= MAX_CHG_TEMP){
+                    throw std::out_of_range("Charger temperature above cut temp");
+                }
+                adbms.start_gpio_adc_conversion();
+                adbms.read_aux_adc();
+                for(uint8_t i=0;i<adbms.get_n();i++){
+                    for(uint8_t j=0;j<9;j++){
+                        if(lm35.convertTemperature(adbms.convert_voltage(adbms.get_aux(i, j)))>=cut_temp){
+                            throw std::out_of_range("Battery temperature above cut temp");
+                        }
+                    }
+                    for(uint8_t j=0;j<adbms.get_cell_qnt(i);j++){
+                        float volt = adbms.convert_voltage(adbms(i, j));
+                        if(volt > mem_manager.getVOV() + 0.02 || volt < mem_manager.getVUV()){
+                            throw std::out_of_range("Battery cell voltage out of range");
+                        }
+                        if(volt >= mem_manager.getVOV()){
+                            if(charge_state == CYCLE_CHG_STATE){
+                                charge_state = CYCLE_REST_STATE;
+                                next_state = CYCLE_DSG_STATE;
+                            }else{
+                                charge_state = CYCLE_DSG_STATE;
+                            }
+                        }else if(volt <= mem_manager.getCutVolt()){
+                            if(charge_state == CYCLE_DSG_STATE){
+                                charge_state = CYCLE_REST_STATE;
+                                next_state = CYCLE_CHG_STATE;
+                            }else{
+                                charge_state = CYCLE_CHG_STATE;
+                            }
+                        }
+                    }
+                }
+                charge_state = charge_state == CYCLE_START_STATE? CYCLE_CHG_STATE: charge_state;
+                switch (charge_state)
+                {
+                case CYCLE_START_STATE:
+                    pwmproc::set_i_load(0);
+                    pwmproc::set_v_out(0);
+                    pwmproc::set_i_out(0);
+                    break;
+                case CYCLE_CHG_STATE:
+                    pwmproc::set_i_load(0);
+                    pwmproc::set_v_out(mem_manager.getChgVolt());
+                    pwmproc::set_i_out(mem_manager.getChgCurr());
+                    break;
+                case CYCLE_DSG_STATE:
+                    pwmproc::set_i_out(0);
+                    pwmproc::set_v_out(0);
+                    pwmproc::set_i_load(mem_manager.getDischgCurr());
+                    break;
+                case CYCLE_REST_STATE:
+                    safety_timer += ((float)PROCESS_READ_PERIOD/999.0);
+                    pwmproc::set_i_load(0);
+                    pwmproc::set_v_out(0);
+                    pwmproc::set_i_out(0);
+                    if(safety_timer == (mem_manager.getRestTime()*60)){
+                        safety_timer = 0;
+                        charge_state = next_state;
+                    }
+                    break;
+                case FINISH_STATE:
+                    lv_label_set_text(label_start_process, "FINISH");
+                    pwmproc::set_i_load(0);
+                    pwmproc::set_v_out(0);
+                    pwmproc::set_i_out(0);
+                    break;
+                default:
+                    break;
+                }
+            }
+        }catch(const std::exception &e){
+            charge_state = ERROR_STATE;
+            lv_label_set_text_fmt(label_start_process, "%s", e.what());
+            pwmproc::set_i_load(0);
+            pwmproc::set_v_out(0);
+            pwmproc::set_i_out(0);
+        }
     }
     void init_adbms_task(){
         adbms_read = lv_timer_create(adbms_start_scr_read, ADBMS_READ_PERIOD, NULL);

@@ -64,4 +64,39 @@ namespace gui{
         }
         
     }
+
+    void init_process_data_labels(lv_obj_t *grid, lv_obj_t **labels_data, lv_obj_t *label_state, lv_style_t *style_data,lv_style_t *style_state,  const char **process_values){
+         try{
+                lv_obj_t *process_state_cont = lv_obj_create(grid);
+                init_cont(process_state_cont, style_state , 0, 1, 8);
+                lv_obj_t *data_conts[6];
+                for(uint8_t i=0;i<6;i+=2){
+                    data_conts[i] = lv_obj_create(grid);
+                    init_cont(data_conts[i], style_data, 0, i/2+2, 3);
+                }
+                for(uint8_t i=1;i<6;i+=2){
+                    data_conts[i] = lv_obj_create(grid);
+                    init_cont(data_conts[i], style_data, 3, i/2+2, 4);
+                }
+                label_state = lv_label_create(process_state_cont);
+                lv_obj_center(label_state);
+                //data labels
+                for(uint8_t i=0;i<6;i++){
+                    labels_data[i] = lv_label_create(data_conts[i]);
+                    lv_obj_align(labels_data[i], LV_ALIGN_TOP_LEFT, 0, 0);
+                    lv_obj_set_style_text_font(labels_data[i], &lv_font_montserrat_16, LV_STATE_DEFAULT);
+                    lv_label_set_text(labels_data[i], "...");
+                }
+                //data name labels
+                lv_obj_t *data_names_labels[6];
+                for(uint8_t i=0;i<6;i++){
+                    data_names_labels[i] = lv_label_create(data_conts[i]);
+                    lv_obj_align(data_names_labels[i], LV_ALIGN_BOTTOM_RIGHT, 0 , 0);
+                    lv_obj_set_style_text_font(data_names_labels[i], &lv_font_montserrat_10, LV_STATE_DEFAULT);
+                    lv_label_set_text(data_names_labels[i], process_values[i]);
+                }
+            }catch(const std::exception &e){
+
+            }
+    }
 };

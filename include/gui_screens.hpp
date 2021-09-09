@@ -31,6 +31,7 @@ namespace gui{
     static uint8_t data_type_selected;
     static uint8_t current_adbms;
     static uint32_t safety_timer;
+    static float capacity;
     static float current_curr;
     static uint16_t dV_max;
     static uint8_t charge_state;
@@ -108,6 +109,7 @@ namespace gui{
     static lv_obj_t *bars_cells_voltage[18];
     static lv_obj_t *label_special_symbol;
     static lv_obj_t *label_start_process;
+    static lv_obj_t *label_process_data[6];
     void init_start_screen();
     //process screens
     void init_process_screen(uint8_t process_type = CHARGE_PROCESS);
@@ -147,6 +149,10 @@ namespace gui{
     void adbms_data_graph_scr_read(lv_timer_t *timer);
     void adbms_process_scr_read(lv_timer_t *timer);
     void adbms_start_process_scr_read(lv_timer_t *timer);
+    void adbms_start_process_chg_scr_read(lv_timer_t *timer);
+    void adbms_start_process_dsg_scr_read(lv_timer_t *timer);
+    void adbms_start_process_store_scr_read(lv_timer_t *timer);
+    void adbms_start_process_cycle_scr_read(lv_timer_t *timer);
     void adbms_settings_scr_read(lv_timer_t *timer);
 
     void process_charge(lv_timer_t *timer);

@@ -12,5 +12,6 @@ namespace gui{
 
     void init_data_buttons(lv_obj_t *grid, lv_style_t **styles,  lv_style_t **pr_styles, lv_coord_t *xs, lv_event_cb_t *cbs, lv_coord_t y, lv_coord_t w = 2, lv_coord_t h = 1);
 
+    void init_process_data_labels(lv_obj_t *grid, lv_obj_t **labels_data, lv_obj_t *label_state,  lv_style_t *style_data,lv_style_t *style_state, const char **process_values);
     
 }

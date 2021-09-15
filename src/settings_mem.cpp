@@ -199,6 +199,7 @@ void MemManager::setDefaultSettings(){
     values_read = true;
     uint8_t val = 7;
     this->write(std::get<0>(this->memory_map.at("FIRST")), &val, std::get<1>(this->memory_map.at("FIRST")));
+    this->setADBMSQuantity(1);
     this->setVOV(4.21);
     this->setVUV(1.5);
     this->setChgCurr(10.0);
@@ -209,4 +210,5 @@ void MemManager::setDefaultSettings(){
     this->setCutTemp(45);
     this->setSafetyTimer(240);
     this->setRestTime(5);
+    this->setdVMin(20);
 }

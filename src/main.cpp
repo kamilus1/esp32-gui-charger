@@ -47,6 +47,8 @@ void setup() {
   }else{
     mem_manager.updateValues();
   }
+  //this line should be deleted after
+  mem_manager.setDefaultSettings();
   //configure lm35 driver
   lm35.setResolution(ADBMS_ADC_RESOLUTION);
   //configuring UART interrupts 
@@ -61,28 +63,18 @@ void setup() {
   esp_log_level_set(TAG, ESP_LOG_INFO);
   uart_set_pin(UART_NUM_0, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
   uart_driver_install(UART_NUM_0, BUF_SIZE, BUF_SIZE, 20, &uart0_queue, 0);
-  
   xTaskCreate(UART_ISR_ROUTINE, "UART_ISR_ROUTINE", 2048, NULL, 12, NULL);
-
+  //ina238 begin
   ina.begin();
+  //adbms begin
   pinMode(CS, OUTPUT);
-  adbms.set_adbms_qnt(mem_manager.getADBMSQuantity());
-  adbms.begin();
-  adbms.set_config_reg_a();
-  adbms.set_config_reg_b();
+  adbms.begin(mem_manager.getADBMSQuantity());
+  //tft screeen begin
   tft.init();
   tft.setRotation(3);
   uint16_t calData[5] = { 275, 3620, 264, 3532, 1 };
   tft.setTouch( calData );
-
-  
- 
-  
- 
-  // put your setup code here, to run once:
-  
   //init setup of LVGL
-  
   lv_init();
   lv_disp_draw_buf_init( &draw_buf, buf, NULL, screenWidth * 10 );
   static lv_disp_drv_t disp_drv;
@@ -99,27 +91,19 @@ void setup() {
    indev_drv.type = LV_INDEV_TYPE_POINTER;
    indev_drv.read_cb = my_touchpad_read;
    lv_indev_drv_register( &indev_drv );
-   
-
    //initialize pwm 
-
    pwmproc::init_pwm();
   //initialize terminal tasks
   huart::init_tasks();
-    
      //Initialize styles
     gui::init_styles();
     gui::init_transition_screen();
-
-
    //gui::init_demo_screen();
    gui::init_start_screen();
    gui::load_current();
    //initialize tasks
     gui::init_adbms_task();
     //lv_example_win_1();
-    //start cell ballancing
-    adbms.start_cell_ballancing();
     //setup core 0 task
     
 }

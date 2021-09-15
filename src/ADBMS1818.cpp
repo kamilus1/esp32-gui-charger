@@ -66,20 +66,17 @@ void ADBMS1818::u16_to_u8(uint16_t x, uint8_t *y){
 }
 
 
-ADBMS1818::ADBMS1818(uint8_t port, uint8_t cspin, uint8_t n, uint32_t freq,  uint8_t br): f(freq), cs(cspin), n(n), byte_reg(br){
+ADBMS1818::ADBMS1818(uint8_t port, uint8_t cspin, uint32_t freq,  uint8_t br): f(freq), cs(cspin), byte_reg(br){
     spi = new SPIClass(port);
     spi->begin();
-    this->init();
 }
-ADBMS1818::ADBMS1818(int8_t spi_pins[4], uint8_t n, uint32_t freq,  uint8_t br): f(freq), cs(spi_pins[3]), n(n), byte_reg(br){
+ADBMS1818::ADBMS1818(int8_t spi_pins[4], uint32_t freq,  uint8_t br): f(freq), cs(spi_pins[3]),  byte_reg(br){
     spi = new SPIClass(VSPI);
     spi->begin(spi_pins[0], spi_pins[1], spi_pins[2], cs);
-    this->init();
 }
-ADBMS1818::ADBMS1818(uint8_t cspin, uint8_t n, uint32_t freq,  uint8_t br): f(freq), cs(cspin), n(n), byte_reg(br){
+ADBMS1818::ADBMS1818(uint8_t cspin, uint32_t freq,  uint8_t br): f(freq), cs(cspin), byte_reg(br){
     spi = new SPIClass(VSPI);
     spi->begin();
-    this->init();
 }
 void ADBMS1818::init(){
     this->cells_value = new uint16_t *[this->n];
@@ -258,8 +255,10 @@ void ADBMS1818::set_config_reg_b(){
 }
 
 
-void ADBMS1818::begin(){
+void ADBMS1818::begin(uint8_t n){
+    this->n = n;
     digitalWrite(this->cs, HIGH);
+    this->init();
     this->set_config_reg_a();
     this->set_config_reg_b();
 }

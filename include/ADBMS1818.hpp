@@ -74,12 +74,12 @@ class ADBMS1818{
         
     public:
         
-        explicit ADBMS1818(uint8_t port,  uint8_t csPin, uint8_t n = 1, uint32_t freq= 1000000, uint8_t br = 6);
-        explicit ADBMS1818(int8_t spi_pins[4], uint8_t n = 1, uint32_t freq= 1000000, uint8_t br = 6);
-        explicit ADBMS1818(uint8_t csPin, uint8_t n = 1, uint32_t freq= 1000000, uint8_t br = 6);
+        explicit ADBMS1818(uint8_t port,  uint8_t csPin, uint32_t freq= 1000000, uint8_t br = 6);
+        explicit ADBMS1818(int8_t spi_pins[4], uint32_t freq= 1000000, uint8_t br = 6);
+        explicit ADBMS1818(uint8_t csPin,  uint32_t freq= 1000000, uint8_t br = 6);
         //couple setters
         void set_adbms_qnt(uint8_t n);
-        void begin();
+        void begin(uint8_t n=1);
         void wake_up(uint32_t dur=300);
         void wake_up_idle();
         void set_config_reg_a();
